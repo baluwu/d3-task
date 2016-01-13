@@ -1,0 +1,13 @@
+#!/bin/bash
+
+ROOT_PATH="/data/javascript/node/D3/js";
+LOG_FILE="$ROOT_PATH/logs/forever.log";
+WEB_ROOT="$ROOT_PATH/webapp/";
+
+ps -eo pid,command | grep '/usr/local/bin/iojs' | awk '{print $1}' | xargs kill -QUIT > /dev/null 2>&1
+
+cd $WEB_ROOT && (/usr/sbin/forever --minUptime 5000 --spinSleepTime 1000 -p $ROOT_PATH --wachDiretory -l $LOG_FILE -a -w start start.js) 
+
+forever list
+
+
