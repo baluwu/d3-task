@@ -1,0 +1,20 @@
+{
+    "name": "d3task",
+    "version": "1.0.0",
+    "description": "diansan task management",
+    "main": "./index.js",
+    "dependencies": {
+        "moment": "^2.0.0",
+        "underscore": "^1.4.4"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/baluwu/d3-task.git"
+    },
+    "devDependencies": {},
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "author": "W.G",
+    "license": "BSD-2-Clause"
+}
