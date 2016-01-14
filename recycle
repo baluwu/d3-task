@@ -1,4 +1,4 @@
-#! /bin/bash 
+#!/bin/bash 
 # This script is used to remove the memory cache
 # To free pagecache: 
 sync 
