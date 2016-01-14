@@ -7,7 +7,7 @@ var http = require('http')
     , URL = require('url')
     , crypto = require('crypto')
     , querystring = require('querystring')
-    , cfg = require('../../open'); 
+    , cfg = require('../../config/open'); 
 
 var _appParam = function(pam) {
     return JSON.stringify(keySort(pam));
@@ -20,12 +20,12 @@ var _appParam = function(pam) {
  * @constructor
  */
 var _buildUrl = function(pam) {
-    var url = '' + '?';
+    var url = cfg.JOS_URL + '?';
 
-    _.each(pam, function(k, v) {
+    _.each(pam, function(v, k) {
         url += k + '=' + encodeURIComponent(v) + '&'; 
     });
-
+    
     return url.substr(0, url.length - 1);
 };
 
@@ -39,8 +39,8 @@ var _buildUrl = function(pam) {
  * @param params
  * @constructor
  */
-var post = function (session, method, params, callback) {
-
+var post = function (params, callback) {
+    
     /* system params */
     var sp = {
         access_token: params.access_token,
@@ -49,22 +49,19 @@ var post = function (session, method, params, callback) {
         timestamp: moment(new Date()).format("YYYY-MM-DD HH:mm:ss").toString(),
         method: params.method
     };
-
+    
     delete params.method;
-
-    /* item params */
-    var ip = params;
 
     /* api param */
     var ap = {
-        360buy_param_json: appParams(ip.param_json)   
+        '360buy_param_json': _appParam(params.param_json)   
     };
 
-    sp.sign = _genSign(_.extend(ap, sp), cfg.JOS_SECRET);
+    sp.sign = _genSign(_.extend(sp, ap), cfg.JOS_APPSECRET);
 
     var u = URL.parse(_buildUrl(sp));
-
-    _httpPost(u.hostname, u.pathname, u.port, ap, callback);
+    
+    _httpPost(u.hostname, u.path, u.port, ap, callback);
 }
 
 /**
@@ -79,7 +76,7 @@ var post = function (session, method, params, callback) {
 var _httpPost = function (host, path, port, data, callback) {
     var result = '', timeout;
     var post_data = querystring.stringify(data);
-
+    
     var options = {
         hostname: host,
         port: port || 80,
@@ -91,8 +88,9 @@ var _httpPost = function (host, path, port, data, callback) {
             'timeout': 30000
         }
     };
-
+    
     var req = http.request(options, function (res) {
+
         res.setEncoding('utf8');
 
         res.on('data', function (chunk) {
@@ -121,7 +119,7 @@ var _httpPost = function (host, path, port, data, callback) {
     });
 
     timeout = setTimeout(function() { req.emit('timeout'); }, 15000);
-
+    
     req.write(post_data + '\n');
     req.end();
 };
