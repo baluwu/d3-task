@@ -8,7 +8,7 @@ var p = {
     'method': '360buy.overseas.order.sop.delivery',
     'param_json': 
     {
-        'logistics_id': '', //物流id
+        'logistics_id': '', //物流公司id
         'order_id': '', //订单id
         'waybill': '' //物流id
     }
