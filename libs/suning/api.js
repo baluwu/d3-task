@@ -16,7 +16,7 @@ var http = require('http')
  * @constructor
  */
 var post = function (params, callback) {
-    var now = moment(new Date()).format("YYYY-MM-DD HH:mm:ss").toString();
+    var now = moment(new Date()).format('YYYY-MM-DD HH:mm:ss').toString();
     
     /* post data */
     var pd = params.param_json;
@@ -59,7 +59,7 @@ var _httpPost = function (host, path, port, head, data, callback) {
 
     var result = ''
         , timeout
-        , post_data = data;//querystring.stringify(data);
+        , post_data = data;
     
     var options = {
         hostname: host,
@@ -67,7 +67,7 @@ var _httpPost = function (host, path, port, head, data, callback) {
         path: path || "/",
         method: 'POST',
         headers: _.extend(head, {
-            'Content-Type': "application/x-www-form-urlencoded;charset=utf-8",
+            'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8',
             'Content-Length': post_data.length,
             'timeout': 15000
         })
@@ -126,8 +126,7 @@ var _genSign = function (params, secret) {
 
     tobeSigned = new Buffer(tobeSigned, 'utf8');
 
-    return 
-        crypto.createHash('md5')
+    return crypto.createHash('md5')
         .update(tobeSigned)
         .digest('hex')
         .toUpperCase();

@@ -80,7 +80,7 @@ var _httpPost = function (host, path, port, callback) {
         path: path || "/",
         method: 'POST',
         headers: {
-            'Content-Type': "application/x-www-form-urlencoded;charset=utf-8",
+            'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8',
             'timeout': 15000
         }
     };

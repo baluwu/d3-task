@@ -80,7 +80,7 @@ var _httpPost = function (host, path, port, data, callback) {
         path: path || "/",
         method: 'POST',
         headers: {
-            'Content-Type': "application/x-www-form-urlencoded;charset=utf-8",
+            'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8',
             'Content-Length': post_data.length,
             'timeout': 15000
         }
@@ -138,11 +138,10 @@ var _genSign = function (params, secret) {
     })
     query += secret;
     
-    var _tempbytes = new Buffer(query, 'utf8')
-        var result = require("crypto").createHash("md5")
-        .update(_tempbytes)
-        .digest('hex').toUpperCase();
-    return result;
+    return crypto.createHash('md5')
+        .update(new Buffer(query, 'utf8'))
+        .digest('hex')
+        .toUpperCase();
 }
 
 /**

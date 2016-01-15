@@ -24,16 +24,17 @@ var post = function (session, method, params, callback) {
         app_key: cfg.TAOBAO_APPKEY,
         method: method,
         session: session,
-        timestamp: moment(new Date()).format("YYYY-MM-DD HH:mm:ss").toString(),
-        format: "json",
-        v: "2.0",
-        sign_method: "md5"
+        timestamp: moment(new Date()).format('YYYY-MM-DD HH:mm:ss').toString(),
+        format: 'json',
+        v: '2.0',
+        sign_method: 'md5'
     });
 
-    _.extend(params, { sign:CreateSign(params, cfg.TAOBAO_APPSECRET) });
+    params.sign = _genSign(params, cfg.TAOBAO_APPSECRET);
+
     var u = URL.parse(cfg.TAOBAO_URL);
 
-    HTTPPost(u.hostname, u.pathname, u.port, params, callback);
+    _HTTPPost(u.hostname, u.pathname, u.port, params, callback);
 }
 
 /**
@@ -45,33 +46,30 @@ var post = function (session, method, params, callback) {
  * @param callback 回调函数，接受返回的数据
  * @constructor
  */
-var HTTPPost = function (host, path, port, data, callback) {
-    var result = "";
-    var post_data = querystring.stringify(data);
+var _HTTPPost = function (host, path, port, data, callback) {
+    var result = ''
+        , post_data = querystring.stringify(data);
 
     var options = {
-        hostname:host,
-        port:port || 80,
-        path:path || "/",
-        method:'POST',
-        headers:{
-            'Content-Type':"application/x-www-form-urlencoded;charset=utf-8",
-            'Content-Length':post_data.length,
-            //'User-Agent':"SpaceTimeApp2.0",
-            //'Keep-Alive':true,
-            'timeout':300000
+        hostname: host,
+        port: port || 80,
+        path: path || '/',
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8',
+            'Content-Length': post_data.length,
+            'timeout': 150000
         }
     };
 
     var req = http.request(options, function (res) {
-        //console.log('STATUS: ' + res.statusCode);
-        //console.log('HEADERS: ' + JSON.stringify(res.headers));
         res.setEncoding('utf8');
+
         res.on('data', function (chunk) {
             result += chunk;
         });
+
         res.on('end', function (chunk) {
-            //console.log("over:"+result);
             callback(result);
         });
     });
@@ -81,7 +79,6 @@ var HTTPPost = function (host, path, port, data, callback) {
         console.log('problem with request: ' + e.message);
     });
 
-    // write data to request body
     req.write(post_data + '\n');
     req.end();
 
@@ -94,21 +91,19 @@ var HTTPPost = function (host, path, port, data, callback) {
  * @return {String}
  * @constructor
  */
-var CreateSign = function (params, secret) {
-    // 第一步：把字典按Key的字母顺序排序
-    params = HashSort(params);
-    // 第二步：把所有参数名和参数值串在一起
+var _genSign = function (params, secret) {
+    
+    params = _keySort(params);
+   
     var query = secret;
     _.each(params, function (item, index) {
         query += index + item;
     })
     query += secret;
-    // 第三步：使用MD5加密,把二进制转化为大写的十六进制
-    var _tempbytes = new Buffer(query, 'utf8')
-        var result = require("crypto").createHash("md5")
+  
+    return crypto.createHash('md5')
         .update(_tempbytes)
-        .digest("hex").toUpperCase();
-    return result;
+        .digest('hex').toUpperCase();
 }
 
 /**
@@ -117,11 +112,8 @@ var CreateSign = function (params, secret) {
  * @return {Object}
  * @constructor
  */
-var HashSort = function (params) {
+var _keySort = function (params) {
     return  _.object(_.pairs(params).sort());
 }
 
 exports.post = post;
-exports.HashSort = HashSort;
-exports.CreateSign = CreateSign;
-exports.HTTPPost = HTTPPost;
