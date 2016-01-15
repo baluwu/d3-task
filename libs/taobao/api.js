@@ -55,7 +55,7 @@ var _genSign = function (params, secret) {
     query += secret;
   
     return crypto.createHash('md5')
-        .update(_tempbytes)
+        .update(new Buffer(query, 'utf8'))
         .digest('hex').toUpperCase();
 }
 

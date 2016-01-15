@@ -47,7 +47,7 @@ var _genSign = function (params) {
     query += params.access_token;
     
     return crypto.createHash('md5')
-        .update(new Buffer(query, 'utf-8'))
+        .update(new Buffer(query, 'utf8'))
         .digest('hex');
 }
 
