@@ -17,6 +17,7 @@ var http = require('http')
 var _HTTPPost = function (host, path, port, head, data, callback) {
     
     var result = ''
+        , timeout
         , post_data = data;
 
     var options = {
@@ -47,6 +48,18 @@ var _HTTPPost = function (host, path, port, head, data, callback) {
         console.log('problem with request: ' + e.message);
         callback(e.message, null);
     });
+
+    req.on('timeout', function() {
+        clearTimeout(timeout);
+
+        if (req.res) {
+            req.res.emit('abort');
+        }
+
+        req.abort();
+    });
+
+    timeout = setTimeout(function() { req.emit('timeout'); }, 15000);
 
     data.length > 0 && req.write(post_data + '\n');
     req.end();
