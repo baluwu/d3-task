@@ -10,7 +10,7 @@ var http = require('http')
     , cfg = require('../../config/open'); 
 
 var _appParam = function(pam) {
-    return JSON.stringify(keySort(pam));
+    return JSON.stringify(_keySort(pam));
 };
 
 /**
@@ -30,13 +30,8 @@ var _buildUrl = function(pam) {
 };
 
 /**
- *
- * @param url Container Url
- * @param appkey
- * @param appSecret
- * @param session client session
- * @param method request api
- * @param params
+ * request method
+ * @param params api param
  * @constructor
  */
 var post = function (params, callback) {
@@ -74,8 +69,10 @@ var post = function (params, callback) {
  * @constructor
  */
 var _httpPost = function (host, path, port, data, callback) {
-    var result = '', timeout;
-    var post_data = querystring.stringify(data);
+
+    var result = ''
+        , timeout
+        , post_data = querystring.stringify(data);
     
     var options = {
         hostname: host,
@@ -133,7 +130,7 @@ var _httpPost = function (host, path, port, data, callback) {
  */
 var _genSign = function (params, secret) {
     
-    params = keySort(params);
+    params = _keySort(params);
     
     var query = secret;
     _.each(params, function (item, index) {
@@ -154,7 +151,7 @@ var _genSign = function (params, secret) {
  * @return {Object}
  * @constructor
  */
-var keySort = function (params) {
+var _keySort = function (params) {
     return  _.object(_.pairs(params).sort());
 }
 
