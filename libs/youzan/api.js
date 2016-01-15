@@ -14,7 +14,7 @@ var _ = require('underscore')
  */
 var post = function (params, callback) {
     var u = URL.parse(cfg.YOUZAN_URL);
-    console.dir(params);
+    
     request(u.hostname, u.path, u.port, {}, querystring.stringify(params), callback);
 }
 
