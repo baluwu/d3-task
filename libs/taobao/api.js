@@ -7,7 +7,7 @@ var _ = require('underscore')
     , URL = require('url')
     , crypto = require('crypto')
     , cfg = require('../../config/open'),
-    , request = require('../../common/http/http');
+    , request = require('../../common/http/http').request;
 
 /**
  *

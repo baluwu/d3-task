@@ -6,7 +6,7 @@ var _ = require('underscore')
     , URL = require('url')
     , crypto = require('crypto')
     , querystring = require('querystring')
-    , cfg = require('../../common/http/http'),
+    , request = require('../../common/http/http').request
     , cfg = require('../../config/open'); 
 
 /**

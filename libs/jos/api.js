@@ -6,8 +6,8 @@ var  _ = require("underscore")
     , URL = require('url')
     , crypto = require('crypto')
     , querystring = require('querystring')
-    , cfg = require('../../config/open'); 
-    , request = require('../../common/http/http'); 
+    , cfg = require('../../config/open')
+    , request = require('../../common/http/http').request; 
 
 var _appParam = function(pam) {
     return JSON.stringify(_keySort(pam));

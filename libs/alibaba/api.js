@@ -5,7 +5,7 @@ var  _ = require("underscore")
     , moment = require('moment')
     , URL = require('url')
     , crypto = require('crypto')
-    , cfg = require('../../config/open'),
+    , cfg = require('../../config/open')
     , request = require('../../common/http/http').request; 
 
 /**
