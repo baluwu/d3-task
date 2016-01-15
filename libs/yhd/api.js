@@ -27,7 +27,7 @@ var post = function (params, callback) {
     }, params);
     
     p.sign = _genSign(p, cfg.YHD_APPSECRET);
-    console.log(p);
+
     var u = URL.parse(cfg.YHD_URL);
     
     _httpPost(u.hostname, u.path, u.port, p, callback);
@@ -116,7 +116,6 @@ var _genSign = function (params, secret) {
         .createHash('md5')
         .update(new Buffer(query, 'utf-8'))
         .digest('hex');
-        //.toUpperCase();
 }
 
 /**
