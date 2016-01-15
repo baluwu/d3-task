@@ -9,54 +9,40 @@ var http = require('http')
     , querystring = require('querystring')
     , cfg = require('../../config/open'); 
 
-var _appParam = function(pam) {
-    return JSON.stringify(_keySort(pam));
-};
-
-/**
- * generate request url
- * @param pam
- * @return {String}
- * @constructor
- */
-var _buildUrl = function(pam) {
-    var url = cfg.JOS_URL + '?';
-
-    _.each(pam, function(v, k) {
-        url += k + '=' + encodeURIComponent(v) + '&'; 
-    });
-    
-    return url.substr(0, url.length - 1);
-};
-
 /**
  * request method
  * @param params api param
+ * @param callback
  * @constructor
  */
 var post = function (params, callback) {
+    var now = moment(new Date()).format("YYYY-MM-DD HH:mm:ss").toString();
     
-    /* system params */
-    var sp = {
+    /* post data */
+    var pd = params.param_json;
+
+    /* request head */
+    var head = {
+        appMethod: params.method,
+        appRequestTime: now,
+        format: 'json',
+        appKey: cfg.SUNING_APPKEY,
         access_token: params.access_token,
-        app_key: cfg.JOS_APPKEY,
-        v: '2.0',
-        timestamp: moment(new Date()).format("YYYY-MM-DD HH:mm:ss").toString(),
-        method: params.method
+        signInfo: 
+            _genSign({
+                method: params.method,
+                timespan: now,
+                appKey: cfg.SUNING_APPKEY,
+                v: 'V1.2',
+                postData: pd
+            }, cfg.SUNING_APPSECRET),
+        versionNo: 'V1.2',
+        'Content-Type': 'text/xml; charset=utf-8'
     };
     
-    delete params.method;
-
-    /* api param */
-    var ap = {
-        '360buy_param_json': _appParam(params.param_json)   
-    };
-
-    sp.sign = _genSign(_.extend(sp, ap), cfg.JOS_APPSECRET);
-
-    var u = URL.parse(_buildUrl(sp));
+    var u = URL.parse(cfg.SUNING_URL);
     
-    _httpPost(u.hostname, u.path, u.port, ap, callback);
+    _httpPost(u.hostname, u.path, u.port, head, pd, callback);
 }
 
 /**
@@ -64,26 +50,27 @@ var post = function (params, callback) {
  * @param host 主机名
  * @param path 请求路径
  * @param port 端口
+ * @param head http头
  * @param data 请求的body参数
  * @param callback 回调函数，接受返回的数据
  * @constructor
  */
-var _httpPost = function (host, path, port, data, callback) {
+var _httpPost = function (host, path, port, head, data, callback) {
 
     var result = ''
         , timeout
-        , post_data = querystring.stringify(data);
+        , post_data = data;//querystring.stringify(data);
     
     var options = {
         hostname: host,
         port: port || 80,
         path: path || "/",
         method: 'POST',
-        headers: {
+        headers: _.extend(head, {
             'Content-Type': "application/x-www-form-urlencoded;charset=utf-8",
             'Content-Length': post_data.length,
             'timeout': 15000
-        }
+        })
     };
     
     var req = http.request(options, function (res) {
@@ -129,30 +116,21 @@ var _httpPost = function (host, path, port, data, callback) {
  * @constructor
  */
 var _genSign = function (params, secret) {
-    
-    params = _keySort(params);
-    
-    var query = secret;
-    _.each(params, function (item, index) {
-        query += index + item;
-    })
-    query += secret;
-    
-    var _tempbytes = new Buffer(query, 'utf8')
-        var result = require("crypto").createHash("md5")
-        .update(_tempbytes)
-        .digest('hex').toUpperCase();
-    return result;
-}
 
-/**
- * 对hash的key字母进行排序
- * @param params
- * @return {Object}
- * @constructor
- */
-var _keySort = function (params) {
-    return  _.object(_.pairs(params).sort());
+    var tobeSigned = secret
+        + params.method
+        + params.timespan
+        + params.appKey 
+        + params.v
+        + (new Buffer(params.postData).toString('base64'));
+
+    tobeSigned = new Buffer(tobeSigned, 'utf8');
+
+    return require("crypto")
+        .createHash("md5")
+        .update(tobeSigned)
+        .digest('hex')
+        .toUpperCase();
 }
 
 exports.post = post;
