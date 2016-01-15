@@ -126,8 +126,8 @@ var _genSign = function (params, secret) {
 
     tobeSigned = new Buffer(tobeSigned, 'utf8');
 
-    return require("crypto")
-        .createHash("md5")
+    return 
+        crypto.createHash('md5')
         .update(tobeSigned)
         .digest('hex')
         .toUpperCase();
