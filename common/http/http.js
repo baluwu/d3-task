@@ -1,6 +1,7 @@
 'use strict';
 
 var http = require('http')
+    , https = require('https')
     , querystring = require('querystring')
     , _ = require('underscore');
 
@@ -32,7 +33,7 @@ var _HTTPPost = function (host, path, port, head, data, callback) {
         })
     };
     
-    var req = http.request(options, function (res) {
+    var req = (port == 80 ? http : https).request(options, function (res) {
         res.setEncoding('utf8');
 
         res.on('data', function (chunk) {

@@ -15,18 +15,19 @@ var _ = require('underscore')
  * @constructor
  */
 var post = function (params, callback) {
+    var u = URL.parse(cfg.ZHE800_URL + '/' + params.method);
     
     /* params */
     var p = _.extend({
         app_key: cfg.ZHE800_APPKEY,
         access_token: params.access_token
     }, params);
+    
+    delete p.method;
 
     p.sign = _genSign(p);
 
-    var u = URL.parse(ZHE800_URL);
-    
-    request(u.hostname, u.path, u.port, {}, querystring.stringify(p), callback);
+    request(u.hostname, u.path, 443, {}, querystring.stringify(p), callback);
 }
 
 /**
@@ -48,7 +49,7 @@ var _genSign = function (params) {
     
     return crypto.createHash('md5')
         .update(new Buffer(query, 'utf8'))
-        .digest('hex');
+        .digest('hex').toUpperCase();
 }
 
 /**
