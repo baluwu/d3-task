@@ -9,10 +9,6 @@ var  _ = require("underscore")
     , cfg = require('../../config/open')
     , request = require('../../common/http/http').request; 
 
-var _appParam = function(pam) {
-    return JSON.stringify(_keySort(pam));
-};
-
 /**
  * generate request url
  * @param pam
@@ -20,7 +16,9 @@ var _appParam = function(pam) {
  * @constructor
  */
 var _buildUrl = function(pam) {
-    var url = cfg.JOS_URL + '?';
+    pam = _keySort(pam);
+
+    var url = cfg.DANGDANG_URL + '?';
 
     _.each(pam, function(v, k) {
         url += k + '=' + encodeURIComponent(v) + '&'; 
@@ -34,29 +32,32 @@ var _buildUrl = function(pam) {
  * @param params api param
  * @constructor
  */
-var post = function (params, callback) {
+var post = function (params, xml, callback) {
     
     /* system params */
     var sp = {
-        access_token: params.access_token,
-        app_key: cfg.JOS_APPKEY,
-        v: '2.0',
+        method: params.method,
         timestamp: moment(new Date()).format('YYYY-MM-DD HH:mm:ss').toString(),
-        method: params.method
+        format: 'xml',
+        app_key: cfg.DANGDANG_APPKEY,
+        v: '1.0',
+        sign_method: 'md5',
+        session: params.access_token
     };
+
+    sp.sign = _genSign(sp, cfg.DANGDANG_APPSECRET);
     
     delete params.method;
+    delete params.access_token;
 
     /* api param */
-    var ap = {
-        '360buy_param_json': _appParam(params.param_json)   
-    };
+    var ap = _.extend(sp, params);
 
-    sp.sign = _genSign(_.extend(sp, ap), cfg.JOS_APPSECRET);
-
-    var u = URL.parse(_buildUrl(sp));
+    var u = URL.parse(_buildUrl(sp)); 
     
-    request(u.hostname, u.path, u.port, {}, querystring.stringify(ap), callback);
+    request(u.hostname, u.path, u.port, {
+        'Content-Type': 'application/xml;charset=GBK'
+    }, xml, callback);
 }
 
 /**
@@ -75,7 +76,7 @@ var _genSign = function (params, secret) {
         query += index + item;
     })
     query += secret;
-    
+
     return crypto.createHash('md5')
         .update(new Buffer(query, 'utf8'))
         .digest('hex')

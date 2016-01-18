@@ -26,14 +26,14 @@ var _HTTPPost = function (host, path, port, head, data, callback) {
         port: port || 80,
         path: path || '/',
         method: 'POST',
-        headers: _.extend(head, {
+        headers: _.extend({
             'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8',
             'Content-Length': post_data.length,
             'timeout': 150000
-        })
+        }, head)
     };
     
-    var req = (port == 80 ? http : https).request(options, function (res) {
+    var req = (options.port == 80 ? http : https).request(options, function (res) {
         res.setEncoding('utf8');
 
         res.on('data', function (chunk) {
