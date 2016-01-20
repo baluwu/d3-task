@@ -61,8 +61,8 @@ exports.check_trade_status = function(access_token, tid, cb) {
             order_id: tid
         }
     };
-
-    api.post(p, function(resp) {
-        cb(_parse_error(resp), null);
+    
+    api.post(p, function(err, resp) {
+        cb(null, { msg: _parse_error(resp), tid: tid });
     });
 };
