@@ -6,7 +6,6 @@ var url = require('url')
     , fn_check_status = require('../../task/check_trade_status').check;
 
 var _output = function(data) {
-    console.log('out', data);
     this.echo(JSON.stringify(data));
     this.end();
 };
