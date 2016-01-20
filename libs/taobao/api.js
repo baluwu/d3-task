@@ -6,7 +6,7 @@ var _ = require('underscore')
     , querystring = require('querystring')
     , URL = require('url')
     , crypto = require('crypto')
-    , cfg = require('../../config/open'),
+    , cfg = require('../../config/open')
     , request = require('../../common/http/http').request;
 
 /**
@@ -19,16 +19,18 @@ var _ = require('underscore')
  * @param params
  * @constructor
  */
-var post = function (session, method, params, callback) {
+var post = function (params, callback) {
     _.extend(params, {
         app_key: cfg.TAOBAO_APPKEY,
-        method: method,
-        session: session,
+        method: params.method,
+        session: params.access_token,
         timestamp: moment(new Date()).format('YYYY-MM-DD HH:mm:ss').toString(),
         format: 'json',
         v: '2.0',
         sign_method: 'md5'
     });
+
+    delete params.access_token;
 
     params.sign = _genSign(params, cfg.TAOBAO_APPSECRET);
 
