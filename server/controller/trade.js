@@ -6,7 +6,7 @@ var url = require('url')
     , fn_check_status = require('../../task/check_trade_status').check;
 
 var _output = function(data) {
-    console.dir(data);
+    console.log('out', data);
     this.echo(JSON.stringify(data));
     this.end();
 };
@@ -38,7 +38,9 @@ ctrlTrade.check_status = function(res, req, body) {
         }
         
         fn_check_status(ci, function(err, r) {
-            return _output.call(self, r);
+            resp.data = r;
+            resp.succ = r.length > 0 ? false : true;
+            return _output.call(self, resp);
         });   
     }
 };
