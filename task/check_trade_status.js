@@ -32,7 +32,16 @@ exports.check = function(arr, cb) {
             );
 
         }, function(err, r) { 
-            ret = ret.concat(r);
+            
+            if (r.length > 0) {
+                /* remove the orders which status is availble to send */
+                r.forEach(function(el) {
+                    if (el.msg !== '') {
+                        ret.push(el);    
+                    } 
+                });    
+            }
+            
             a_cb(err, r);
         });
 

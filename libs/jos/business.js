@@ -14,7 +14,7 @@ var _parse_error = function(resp) {
     try { o = JSON.parse(resp); }
     catch (e) { return '获取订单数据出错'; }
 
-    var r = o.data && o.data.order_get_response && o.data.order_get_response;
+    var r = o.order_get_response;
 
     if (!r || r.code !== '0') {
         error = '无法获取订单数据';
@@ -22,24 +22,30 @@ var _parse_error = function(resp) {
     else {
         var s = r.order ? r.order.orderInfo.order_state : '';
 
-        if ('WAIT_SELLER_STOCK_OUT' != s || 
-            'WAIT_SELLER_DELIVERY' != s) {
+        if ('WAIT_SELLER_STOCK_OUT' == s || 'WAIT_SELLER_DELIVERY' == s) {
+            error = '';
+        }
+        else {
+            var err_desc = {
+                DISTRIBUTION_CENTER_RECEIVED: '订单已发货',
+                WAIT_GOODS_RECEIVE_CONFIRM: '订单已发货',
+                RECEIPTS_CONFIRM: '订单已发货',
+                FINISHED_L: '订单已完成',
+                TRADE_CANCELED: '订单已取消',
+                LOCKED: '订单有退款',
+                SEND_TO_DISTRIBUTION_CENER: '订单已发货'
+            }[s];
 
-            if ('DISTRIBUTION_CENTER_RECEIVED' == s ||
-                'WAIT_GOODS_RECEIVE_CONFIRM' == s ||
-                'RECEIPTS_CONFIRM' == s ||
-                'FINISHED_L' == s || 
-                'TRADE_CANCELED' == s || 
-                'LOCKED' == s || 
-                'SEND_TO_DISTRIBUTION_CENER' == s
-            ) {
-                error = '订单发货失败， 原因: (1)订单已关闭 (2)被锁定 (3)已发货 (4)已取消';
+            if (err_desc)
+            {
+                error = err_desc;
             }    
-            else {
-                error = '订单状态不对:' + s;     
+            else { 
+                error = 
+                    (o.error_response && o.error_response.zh_desc) || 
+                    ('订单状态不对:' + s);
             }
         }
-        else { error = (o.data && o.data.error_response && o.data.error_response.zh_desc) || ''; }
     }
 
     return error;
@@ -56,6 +62,7 @@ exports.check_trade_status = function(access_token, tid, cb) {
     var p = {
         access_token: access_token,
         method: '360buy.order.get',
+        optional_fields: 'order_id,order_state',
         param_json: 
         {
             order_id: tid
