@@ -36,29 +36,6 @@ var ctrlBase = {
     echo: function(error) {
         this.res.write(error);
     },
-
-    post: function(req) {
-        var qry_str = url.parse(req.url).query, ret = '';
-
-        if (qry_str) {
-            ret = qrystr.parse(qry_str);
-        }
-        
-        return ret;
-    },
-
-    get: function(req) {
-        return this.post(req);
-    },
-
-    get_post: function(req, cb) {
-        var body = '';
-        req.on('data', function(trunk) { body += chunk; });
-        req.on('end', function() { 
-            console.dir(body); 
-            cb(null, JSON.stringify(body)); 
-        });
-    }
 };
 
 exports.base = ctrlBase;
