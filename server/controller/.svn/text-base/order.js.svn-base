@@ -1,0 +1,23 @@
+/**
+ * Order Controller
+ * @author W.G
+ * @version 1.0
+ */
+
+'use strict';
+
+var ctrlOrder = require('./ctrl_base').base;
+
+ctrlOrder.send = function(res, req) {
+    this.set_stream(res);
+    this.html_head();   
+    this.echo('Processing Send Order Tasks....');
+    this.end();
+
+    if (process.send_order) {
+        process.send_order.send({ message: 'SEND_ORDER' });
+    }
+
+};
+
+exports.handler = ctrlOrder;
