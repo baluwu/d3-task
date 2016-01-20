@@ -39,7 +39,7 @@ var _parse_error = function(resp) {
                 error = '订单状态不对:' + s;     
             }
         }
-        else { error = (o.data && o.data.error_response) || ''; }
+        else { error = (o.data && o.data.error_response && o.data.error_response.zh_desc) || ''; }
     }
 
     return error;
