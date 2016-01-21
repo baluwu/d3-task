@@ -8,6 +8,7 @@ var http = require('http')
 
 /**
  * HTTP Post请求
+ * @param type POST or GET
  * @param host 主机名
  * @param path 请求路径
  * @param port 端口
@@ -55,6 +56,8 @@ var _httpRequest = function (type, host, path, port, head, data, callback) {
     });
 
     req.on('timeout', function() {
+        cb('timeout', null);
+
         clearTimeout(timeout);
 
         if (req.res) {
