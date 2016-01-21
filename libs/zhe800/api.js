@@ -15,7 +15,6 @@ var _ = require('underscore')
  * @constructor
  */
 var post = function (params, callback) {
-    var u = URL.parse(cfg.ZHE800_URL + '/' + params.method);
     
     /* params */
     var p = _.extend({
@@ -27,7 +26,14 @@ var post = function (params, callback) {
 
     p.sign = _genSign(p);
 
-    request(u.hostname, u.path, 443, {}, querystring.stringify(p), callback);
+    var u = URL.parse( 
+        cfg.ZHE800_URL + '/' + 
+        params.method + '?' +
+        querystring.stringify(p)    
+    );
+    
+    this.HTTP_METHOD = 'GET';
+    request.call(this, u.hostname, u.path, 443, {}, '', callback);
 }
 
 /**
