@@ -16,7 +16,6 @@ exports.route = function(pathname, res, req, body) {
 
         fs.stat(ctrl_file, function(error, stats) {
             if (error) {
-                console.log(error);
                 return out_error('No controller named ' + ctrl + ' found');
             }
 
