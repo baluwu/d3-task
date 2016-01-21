@@ -15,7 +15,7 @@ var http = require('http')
  * @param callback 回调函数
  * @constructor
  */
-var _HTTPPost = function (host, path, port, head, data, callback) {
+var _httpRequest = function (type, host, path, port, head, data, callback) {
     
     var result = ''
         , timeout
@@ -25,7 +25,7 @@ var _HTTPPost = function (host, path, port, head, data, callback) {
         hostname: host,
         port: port || 80,
         path: path || '/',
-        method: 'POST',
+        method: type || 'POST',
         headers: _.extend({
             'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8',
             'Content-Length': post_data.length,
@@ -41,6 +41,7 @@ var _HTTPPost = function (host, path, port, head, data, callback) {
         });
 
         res.on('end', function (chunk) {
+            console.log(result);
             callback(null, result);
         });
     });
@@ -66,4 +67,4 @@ var _HTTPPost = function (host, path, port, head, data, callback) {
     req.end();
 };
 
-exports.request = _HTTPPost;
+exports.request = _httpRequest;
