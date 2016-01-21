@@ -2,10 +2,11 @@
     "name": "d3task",
     "version": "1.0.0",
     "description": "diansan task management",
-    "main": "./index.js",
+    "main": "./server/start.js",
     "dependencies": {
         "moment": "^2.0.0",
-        "underscore": "^1.4.4"
+        "underscore": "^1.4.4",
+        "async": "^1.5.2"
     },
     "repository": {
         "type": "git",
