@@ -36,7 +36,7 @@ var post = function (params, callback) {
 
     var u = URL.parse(cfg.TAOBAO_URL);
 
-    request(u.hostname, u.pathname, u.port, {}, querystring.stringify(params), callback);
+    request('POST', u.hostname, u.pathname, u.port, {}, querystring.stringify(params), callback);
 }
 
 /**

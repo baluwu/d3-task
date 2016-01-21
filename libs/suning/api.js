@@ -41,7 +41,7 @@ var post = function (params, callback) {
     
     var u = URL.parse(cfg.SUNING_URL);
     
-    request(u.hostname, u.path, u.port, head, pd, callback);
+    request('POST', u.hostname, u.path, u.port, head, pd, callback);
 }
 
 /**

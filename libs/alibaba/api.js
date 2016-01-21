@@ -56,7 +56,7 @@ var post = function (params, callback) {
 
     var u = URL.parse(_buildUrl(sp, params));
     
-    request(u.hostname, u.path, u.port, {}, '', callback);
+    request('POST', u.hostname, u.path, u.port, {}, '', callback);
 }
 
 /**

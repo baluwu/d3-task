@@ -55,9 +55,15 @@ var post = function (params, xml, callback) {
 
     var u = URL.parse(_buildUrl(sp)); 
     
-    request(u.hostname, u.path, u.port, {
-        'Content-Type': 'application/xml;charset=GBK'
-    }, xml, callback);
+    request(
+        'POST', 
+        u.hostname, 
+        u.path, 
+        u.port, 
+        { 'Content-Type': 'application/xml;charset=GBK' }, 
+        xml, 
+        callback
+    );
 }
 
 /**

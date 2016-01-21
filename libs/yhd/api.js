@@ -30,7 +30,7 @@ var post = function (params, callback) {
 
     var u = URL.parse(cfg.YHD_URL);
     
-    request(u.hostname, u.path, u.port, {}, querystring.stringify(p), callback);
+    request('POST', u.hostname, u.path, u.port, {}, querystring.stringify(p), callback);
 }
 
 /**

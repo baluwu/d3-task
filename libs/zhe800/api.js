@@ -32,8 +32,7 @@ var post = function (params, callback) {
         querystring.stringify(p)    
     );
     
-    this.HTTP_METHOD = 'GET';
-    request.call(this, u.hostname, u.path, 443, {}, '', callback);
+    request('GET', u.hostname, u.path, 443, {}, '', callback);
 }
 
 /**
