@@ -3,7 +3,8 @@
 var http = require('http')
     , https = require('https')
     , querystring = require('querystring')
-    , _ = require('underscore');
+    , _ = require('underscore')
+    , env = require('../../config/server').ENV;
 
 /**
  * HTTP Post请求
@@ -41,7 +42,9 @@ var _httpRequest = function (type, host, path, port, head, data, callback) {
         });
 
         res.on('end', function (chunk) {
-            console.log(result);
+            if (env == 'DEV' || env == 'TEST') {
+                console.log(result);
+            }
             callback(null, result);
         });
     });
