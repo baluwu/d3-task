@@ -61,7 +61,7 @@ var _parse_error = function(resp) {
  */
 exports.check_trade_status = function(access_token, tid, cb) {
     var p = {
-        session: access_token,
+        access_token: access_token,
         method: 'taobao.trade.get',
         fields: 'status,orders',
         tid: '' + tid
