@@ -60,7 +60,7 @@ exports.check_trade_status = function(access_token, tid, cb) {
     var p = {
         access_token: access_token,
         method: 'trade.order.detail.get',
-        id: '' + tid,
+        id: tid.tid || tid,
         needOrderEntries: false,
         needInvoiceInfo: false,
         needOrderMemoList: false,
@@ -68,6 +68,6 @@ exports.check_trade_status = function(access_token, tid, cb) {
     };
 
     api.post(p, function(err, resp) {
-        cb(null, { msg: err || _parse_error(resp), tid: tid });
+        cb(null, { msg: err || _parse_error(resp), tid: tid.ptid || tid });
     });
 };

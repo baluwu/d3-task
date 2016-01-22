@@ -50,14 +50,14 @@ exports.check_trade_status = function(access_token, tid, cb) {
     var p = {
         access_token: access_token,
         method: 'dangdang.order.details.get',
-        o: '' + tid
+        o: tid.tid || tid
     };
 
     api.post(p, '', function(err, resp) {
 
         var parser = new xml2js.Parser();
         parser.parseString(resp, function(err1, r) {
-            cb(null, { msg: err || err1 || _parse_error(r), tid: tid });
+            cb(null, { msg: err || err1 || _parse_error(r), tid: tid.ptid || tid });
         });
     });
 };
