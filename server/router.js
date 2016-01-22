@@ -13,7 +13,7 @@ exports.route = function(pathname, res, req, body) {
 
         var ctrl = ca[1], act = ca[2], fs = require('fs'),
             ctrl_file = './controller/' + ctrl + '.js';
-
+        console.log(ctrl_file, ca);
         fs.stat(ctrl_file, function(error, stats) {
             if (error) {
                 return out_error('No controller named ' + ctrl + ' found');

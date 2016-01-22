@@ -53,15 +53,8 @@ var check = function(arr, cb) {
 
 var main = function() {
     event.register_event('CK_TRADE_ST', function(data) {
-        console.log('worker %d start working', process.pid);
-        
         check(data, function(err, r) {
-            console.log('job done, worker %d', process.pid);
-            
-            console.log('worker send CK_FIN message');
-            process.send({
-                type: 'CK_FIN', params: r
-            });        
+            process.send({ type: 'CK_FIN', params: r });        
         }); 
     });
 

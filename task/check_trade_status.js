@@ -12,7 +12,7 @@ var async = require('async')
  */
 exports.check = function(arr, cb) {
     
-    var t = array_split(arr, 50), ret = [];
+    var t = array_split(arr, 101), ret = [];
 
     async.eachSeries(t, function(els, a_cb) {
 
@@ -25,7 +25,7 @@ exports.check = function(arr, cb) {
                     { msg: '未知平台订单', tid: el.tid }
                 );
             }
-
+            
             mod.check_trade_status(
                 el.access_token,
                 el.tid, b_cb

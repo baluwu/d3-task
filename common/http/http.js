@@ -20,6 +20,7 @@ var http = require('http')
 var _httpRequest = function (type, host, path, port, head, data, callback) {
     
     var result = ''
+        , called = 0
         , timeout
         , post_data = data;
 
@@ -46,17 +47,29 @@ var _httpRequest = function (type, host, path, port, head, data, callback) {
             if (env == 'DEV' || env == 'TEST') {
                 console.log(result);
             }
-            callback(null, result);
+
+            if (!called) {
+                called = 1;
+                callback(null, result);
+            }
         });
     });
 
     req.on('error', function (e) {
         console.log('problem with request: ' + e.message);
-        callback(e.message, null);
+
+        if (!called) {
+            called = 1;
+            console.log('callback when http error:' + e.message);
+            callback(e.message, null);
+        }
     });
 
     req.on('timeout', function() {
-        cb('timeout', null);
+        if (!called) {
+            called = 1;
+            callback('接口超时', null);
+        }
 
         clearTimeout(timeout);
 
@@ -67,7 +80,7 @@ var _httpRequest = function (type, host, path, port, head, data, callback) {
         req.abort();
     });
 
-    timeout = setTimeout(function() { req.emit('timeout'); }, 15000);
+    timeout = setTimeout(function() { req.emit('timeout'); }, 10000);
 
     data.length > 0 && req.write(post_data + '\n');
     req.end();
