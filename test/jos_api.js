@@ -3,7 +3,7 @@
 var post = require('../libs/jos/api').post;
 
 /* 京东订单发货 */
-var p = {
+var p1 = {
     'access_token': '', //授权码
     'method': '360buy.overseas.order.sop.delivery',
     'param_json': 
@@ -14,6 +14,7 @@ var p = {
     }
 };
 
-post(p, function(err, r) {
+post(p1, function(err, r) {
     console.dir(err);    
 });
+
