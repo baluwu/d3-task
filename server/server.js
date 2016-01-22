@@ -15,8 +15,6 @@ module.exports.start = function(route) {
         
         if (req.method == 'POST') {
             req.on('data', function(trunk) { 
-                console.log(trunk);
-
                 // too much POST data, kill the connection!
                 // 1e6 === 1 * Math.pow(10, 6) === 1 * 1000000 ~~~ 1MB
                 if (body.length > 1e6) {
