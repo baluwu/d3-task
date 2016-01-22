@@ -9,13 +9,26 @@ var server = require('./server')
 process.n_worker = n_cpu;
 process.workers = [];
 
+/* create work process */
 do {
-    process.workers.push(
-        cp.fork('../task/ck_trade_status')
-    );
+    var proc = cp.fork('../task/ck_trade_status');
+    process.workers.push(proc);
+
+    /* handle messages send by child process */
+    event.start(proc);
 } while (--n_cpu > 0);
 
-console.log('start %s work process', process.workers.length);
+/* make sure the worker exist all the time */
+event.register_event('CHILD_EXIT', function(pid) {
+    var n = process.n_workers
+        , wk = process.workers;
+
+    for (var x = 0; x < n; x++) {
+        if (wk[n] && wk[n].pid == pid) {
+            wk[n] = cp.fork('../task/ck_trade_status');
+        }
+    }
+});
 
 server.start(router.route);
 
