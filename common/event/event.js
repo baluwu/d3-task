@@ -10,7 +10,6 @@ var p_event = {}, if_init = {};
  */
 var register_event = function(type, handler) {
     p_event[type] = handler;
-    console.log(p_event, process.pid);
 };
 
 /**
