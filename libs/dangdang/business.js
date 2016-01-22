@@ -56,11 +56,8 @@ exports.check_trade_status = function(access_token, tid, cb) {
     api.post(p, '', function(err, resp) {
 
         var parser = new xml2js.Parser();
-        parser.parseString(resp, function(err, r) {
-            if (err) {
-                cb(null, { msg: '获取订单数据出错', tid: tid });    
-            }
-            else cb(null, { msg: _parse_error(r), tid: tid });
+        parser.parseString(resp, function(err1, r) {
+            cb(null, { msg: err || err1 || _parse_error(r), tid: tid });
         });
     });
 };

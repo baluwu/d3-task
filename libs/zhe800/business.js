@@ -63,6 +63,6 @@ exports.check_trade_status = function(access_token, tid, cb) {
     };
 
     api.post(p, function(err, resp) {
-        cb(null, { msg: _parse_error(resp), tid: tid });
+        cb(null, { msg: err || _parse_error(resp), tid: tid });
     });
 };
