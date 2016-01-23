@@ -54,9 +54,8 @@ var check = function(arr, cb) {
 /**
  * 子进程消息接收和发送
  * @param arr {Object Array} [{plt, access_token, tid}, ...]
- * @param cb callback function
- * @return {Object Array}
- * @constructor
+ * @param cb {Function} callback function
+ * @return null
  */
 var main = function() {
     event.register_event('CK_TRADE_ST', function(data) {
