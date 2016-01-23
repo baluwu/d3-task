@@ -20,7 +20,7 @@ var _parse_error = function(resp) {
         error = '平台接口数据错误';
     }
     else {
-        var s = o.status, rfs = o.refund_status;
+        var s = o.status, rfs = o.refund_state;
         
         var error_desc = {
             TRADE_BUYER_SIGNED: '订单已发货',
