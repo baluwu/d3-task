@@ -2,6 +2,7 @@
 'use strict';
 
 var url = require('url')
+    , cp = require('child_process')
     , event = require('../../common/event/event')
     , ctrlTrade = require('./ctrl_base').base;
 
