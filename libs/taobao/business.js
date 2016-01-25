@@ -71,6 +71,8 @@ exports.check_trade_status = function(access_token, tid, cb) {
     };
 
     api.post(p, function(err, resp) {
-        cb(null, { msg: err || _parse_error(resp), tid: tid.ptid || tid });
+        var err = err || _parse_error(resp);
+        err && tid.tid && (err = tid.tid + err); 
+        cb(null, { msg: err, tid: tid.ptid || tid });
     });
 };
