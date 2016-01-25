@@ -29,7 +29,7 @@ var check = function(arr, cb) {
             
             mod.check_trade_status(
                 el.access_token,
-                el.tid, b_cb
+                el.ptid ? {ptid: el.ptid, tid: el.tid} : el.tid, b_cb
             );
 
         }, function(err, r) { 
