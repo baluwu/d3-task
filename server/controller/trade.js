@@ -2,12 +2,13 @@
 'use strict';
 
 var url = require('url')
+    , cp = require('child_process')
     , event = require('../../common/event/event')
-    , ctrlTrade = require('./ctrl_base').base;
+    , ctrlTrade = {};//require('./ctrl_base').base;
 
-var _output = function(data) {
-    this.echo(JSON.stringify(data));
-    this.end();
+var _output = function(res, data) {
+    res.write(JSON.stringify(data));
+    res.end();
 };
 
 /**
@@ -39,36 +40,51 @@ ctrlTrade.check_status = function(res, req, body) {
     var self = this, ci, worker
         , resp = { msg: '', succ: false, data: '' };
 
-    self.set_stream(res);
-    self.http_head(200, 'json');   
-
+    res.writeHead(200, { 'Content-Type': 'application/json' })
 
     if (!body.bid) {
         resp.msg = 'no params: bid';
-        _output.call(self, resp);
+        _output(res, resp);
     }
     else if (!body.check_info) {
         resp.msg = 'no param: check_info';
-        _output.call(self, resp);
+        _output(res, resp);
     }
     else {
         try { ci = JSON.parse(body.check_info); }
         catch(e) { 
             resp.msg = 'Invalid param check_info';
-            return _output.call(self, resp);
+            return _output(res, resp);
         }
+        
+        /* register the context of this call */
+        var call_id = event.register_context(res);
 
-        event.register_event('CK_FIN', function(data) {
+        /* register CK_FIN event */
+        event.register_event('CK_FIN', function(call_id, data) {
             resp.data = data;
             resp.succ = !data.length;
-            _output.call(self, resp);
+            
+            /* get context by call_id */
+            var response = event.get_context(call_id);
+
+            _output(response, resp);
+
+            /* release context */
+            event.release_context(call_id);
         });
 
+        /* get woker process */
         worker = _get_worker(body.bid);
 
+        /* start listen event */
         event.start(worker);
-        worker.send({ type: 'CK_TRADE_ST', params: ci });
+
+        /* send message to child process */
+        worker.send({ type: 'CK_TRADE_ST', call_id: call_id, params: ci });
     }
 };
+
+
 
 exports.handler = ctrlTrade;
