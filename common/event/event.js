@@ -18,13 +18,13 @@ var register_event = function(type, handler) {
 
 /**
  * 注册事件上下文
- * @param context {Object} 事件上下文 
+ * @param ctx {Object} 事件上下文 
  * @return {String} uuid
  */
-var register_context = function(context) {
+var register_context = function(ctx) {
     var uid = uuid.v1();
 
-    context[uid] = context;
+    context[uid] = ctx;
 
     return uid;
 };

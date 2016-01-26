@@ -7,6 +7,7 @@ var url = require('url')
     , ctrlTrade = {};//require('./ctrl_base').base;
 
 var _output = function(res, data) {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
     res.write(JSON.stringify(data));
     res.end();
 };
@@ -38,9 +39,8 @@ var _get_worker = function(bid) {
 ctrlTrade.check_status = function(res, req, body) {
     
     var self = this, ci, worker
+        , st = (new Date()).getTime()
         , resp = { msg: '', succ: false, data: '' };
-
-    res.writeHead(200, { 'Content-Type': 'application/json' })
 
     if (!body.bid) {
         resp.msg = 'no params: bid';
@@ -61,17 +61,23 @@ ctrlTrade.check_status = function(res, req, body) {
         var call_id = event.register_context(res);
 
         /* register CK_FIN event */
-        event.register_event('CK_FIN', function(call_id, data) {
+        event.register_event('CK_FIN', function(callid, data) {
             resp.data = data;
             resp.succ = !data.length;
             
             /* get context by call_id */
-            var response = event.get_context(call_id);
-
+            var response = event.get_context(callid);
+            
             _output(response, resp);
 
+            var et = (new Date()).getTime();
+
+            console.log('Handle check %d trades, bid: %d, call_id: %s, use: %d ms',
+                ci.length, body.bid, callid, et - st
+            );
+
             /* release context */
-            event.release_context(call_id);
+            event.release_context(callid);
         });
 
         /* get woker process */

@@ -59,7 +59,6 @@ var check = function(arr, cb) {
  */
 var main = function() {
     event.register_event('CK_TRADE_ST', function(call_id, data) {
-        console.log('call_id: %s', call_id);
         check(data, function(err, r) {
             process.send({ type: 'CK_FIN', call_id: call_id, params: r });        
         }); 
