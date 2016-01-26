@@ -57,7 +57,9 @@ exports.check_trade_status = function(access_token, tid, cb) {
 
         var parser = new xml2js.Parser();
         parser.parseString(resp, function(err1, r) {
-            cb(null, { msg: err || err1 || _parse_error(r), tid: tid.ptid || tid });
+            var _err = err || err1 || _parse_error(resp);
+            _err && tid.tid && (_err = tid.tid + _err); 
+            cb(null, { msg: _err, tid: tid.ptid || tid });
         });
     });
 };
