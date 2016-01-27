@@ -19,11 +19,12 @@ var _output = function(res, data) {
  * @constructor
  */
 var _get_worker = function(bid) {
-    rotate_idx = (rotate_idx++) % process.n_woker;
+    rotate_idx = (++rotate_idx) % process.n_worker;
+
     var worker = process.workers[rotate_idx];
 
     if (!worker) {
-        worker = process.workers[idx] = cp.fork('../../task/ck_trade_status');    
+        worker = process.workers[rotate_idx] = cp.fork('../../task/ck_trade_status');    
     }
 
     return worker;
