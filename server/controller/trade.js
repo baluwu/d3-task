@@ -38,7 +38,7 @@ var _get_worker = function(bid) {
  * @constructor
  */
 ctrlTrade.check_status = function(res, req, body) {
-    
+
     var self = this, ci, worker
         , st = (new Date()).getTime()
         , resp = { msg: '', succ: false, data: '' };
