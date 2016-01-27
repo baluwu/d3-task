@@ -47,6 +47,10 @@ ctrlTrade.check_status = function(res, req, body) {
         resp.msg = 'no params: bid';
         _output(res, resp);
     }
+    else if (!body.app_type) {
+        resp.msg = 'no params: app_type';
+        _output(res, resp);
+    }
     else if (!body.check_info) {
         resp.msg = 'no param: check_info';
         _output(res, resp);
@@ -88,7 +92,7 @@ ctrlTrade.check_status = function(res, req, body) {
         event.start(worker);
 
         /* send message to child process */
-        worker.send({ type: 'CK_TRADE_ST', call_id: call_id, params: ci });
+        worker.send({ type: 'CK_TRADE_ST', call_id: call_id, app_type: body.app_type, params: ci });
     }
 };
 
