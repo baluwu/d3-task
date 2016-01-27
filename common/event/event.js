@@ -59,7 +59,7 @@ var start = function(proc) {
 
     proc.on('message', function(data) {
         var handler = p_event[data.type];
-        handler && handler(data.call_id, data.params);
+        handler && handler(data.call_id, data.app_type, data.params);
     });
 
     if_init[proc.pid] = 1;

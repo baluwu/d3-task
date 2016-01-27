@@ -11,23 +11,24 @@ var async = require('async')
  * @return {Object Array}
  * @constructor
  */
-var check = function(arr, cb) {
+var check = function(app_type, arr, cb) {
     
     var t = array_split(arr, 101), ret = [];
 
     async.eachSeries(t, function(els, a_cb) {
 
         async.map(els, function(el, b_cb) {
-            var mod = require('../libs/' + el.plt + '/business');
-
-            if (!mod) { 
-                return b_cb(
-                    null, 
-                    { msg: '未知平台订单', tid: el.tid }
-                );
+            var mod;
+            try {
+                mod = require('../libs/' + el.plt + '/business');
             }
-            
+            catch (e) { 
+                console.log(e.message); 
+                return b_cb( null, {msg: '未知平台订单', tid: el.tid });
+            }
+
             mod.check_trade_status(
+                app_type,
                 el.access_token,
                 el.ptid ? {ptid: el.ptid, tid: el.tid} : el.tid, b_cb
             );
@@ -58,8 +59,8 @@ var check = function(arr, cb) {
  * @return null
  */
 var main = function() {
-    event.register_event('CK_TRADE_ST', function(call_id, data) {
-        check(data, function(err, r) {
+    event.register_event('CK_TRADE_ST', function(call_id, app_type, data) {
+        check(app_type, data, function(err, r) {
             process.send({ type: 'CK_FIN', call_id: call_id, params: r });        
         }); 
     });
