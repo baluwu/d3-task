@@ -12,7 +12,6 @@ var async = require('async')
  * @constructor
  */
 var check = function(app_type, arr, cb) {
-    
     var t = array_split(arr, 101), ret = [];
 
     async.eachSeries(t, function(els, a_cb) {
@@ -30,7 +29,8 @@ var check = function(app_type, arr, cb) {
             mod.check_trade_status(
                 app_type,
                 el.access_token,
-                el.ptid ? {ptid: el.ptid, tid: el.tid} : el.tid, b_cb
+                el.ptid ? {ptid: el.ptid, tid: el.tid} : el.tid, 
+                b_cb
             );
 
         }, function(err, r) { 

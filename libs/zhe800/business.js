@@ -56,8 +56,9 @@ var _parse_error = function(resp) {
  * @param cb {Function} 回调函数
  * @constructor
  */
-exports.check_trade_status = function(access_token, tid, cb) {
+exports.check_trade_status = function(app_type, access_token, tid, cb) {
     var p = {
+        app_type: app_type,
         access_token: access_token,
 		method: 'api/erp/v2/orders/' + (tid.tid || tid) + '.json'
     };

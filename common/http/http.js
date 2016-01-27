@@ -35,7 +35,7 @@ var _httpRequest = function (type, host, path, port, head, data, callback) {
             'timeout': 150000
         }, head)
     };
-    
+
     var req = (options.port == 80 ? http : https).request(options, function (res) {
         res.setEncoding('utf8');
 

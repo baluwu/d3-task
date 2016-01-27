@@ -15,10 +15,13 @@ var _ = require('underscore')
  * @constructor
  */
 var post = function (params, callback) {
+    var auth = cfg.get_auth('zhe800', params.app_type);
+
+    delete params.app_type;
     
     /* params */
     var p = _.extend({
-        app_key: cfg.ZHE800_APPKEY,
+        app_key: auth.k,
         access_token: params.access_token
     }, params);
     
@@ -27,7 +30,7 @@ var post = function (params, callback) {
     p.sign = _genSign(p);
 
     var u = URL.parse( 
-        cfg.ZHE800_URL + '/' + 
+        auth.u + '/' + 
         params.method + '?' +
         querystring.stringify(p)    
     );

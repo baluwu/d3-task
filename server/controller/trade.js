@@ -38,7 +38,7 @@ var _get_worker = function(bid) {
  * @constructor
  */
 ctrlTrade.check_status = function(res, req, body) {
-
+    
     var self = this, ci, worker
         , st = (new Date()).getTime()
         , resp = { msg: '', succ: false, data: '' };
@@ -66,7 +66,7 @@ ctrlTrade.check_status = function(res, req, body) {
         var call_id = event.register_context(res);
 
         /* register CK_FIN event */
-        event.register_event('CK_FIN', function(callid, data) {
+        event.register_event('CK_FIN', function(callid, app_type, data) {
             resp.data = data;
             resp.succ = !data.length;
             

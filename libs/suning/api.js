@@ -15,7 +15,10 @@ var _ = require('underscore')
  * @constructor
  */
 var post = function (params, callback) {
+    var auth = cfg.get_auth('suning', params.app_type);
     var now = moment(new Date()).format('YYYY-MM-DD HH:mm:ss').toString();
+
+    delete params.app_type;
     
     /* post data */
     var pd = params.param_json;
@@ -25,21 +28,21 @@ var post = function (params, callback) {
         appMethod: params.method,
         appRequestTime: now,
         format: 'json',
-        appKey: cfg.SUNING_APPKEY,
+        appKey: auth.k,
         access_token: params.access_token,
         signInfo: 
             _genSign({
                 method: params.method,
                 timespan: now,
-                appKey: cfg.SUNING_APPKEY,
+                appKey: auth.k,
                 v: 'V1.2',
                 postData: pd
-            }, cfg.SUNING_APPSECRET),
+            }, auth.s),
         versionNo: 'V1.2',
         'Content-Type': 'text/xml; charset=utf-8'
     };
     
-    var u = URL.parse(cfg.SUNING_URL);
+    var u = URL.parse(auth.u);
     
     request('POST', u.hostname, u.path, u.port, head, pd, callback);
 }

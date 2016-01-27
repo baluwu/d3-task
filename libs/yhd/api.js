@@ -15,10 +15,13 @@ var _ = require('underscore')
  * @constructor
  */
 var post = function (params, callback) {
+    var auth = cfg.get_auth('yhd', params.app_type);
+
+    delete params.app_type;
     
     /* params */
     var p = _.extend({
-        appKey: cfg.YHD_APPKEY,
+        appKey: auth.k,
         sessionKey: params.access_token,
         format: 'json',
         ver: '1.0',
@@ -26,9 +29,9 @@ var post = function (params, callback) {
         method: params.method
     }, params);
     
-    p.sign = _genSign(p, cfg.YHD_APPSECRET);
+    p.sign = _genSign(p, auth.s);
 
-    var u = URL.parse(cfg.YHD_URL);
+    var u = URL.parse(auth.u);
     
     request('POST', u.hostname, u.path, u.port, {}, querystring.stringify(p), callback);
 }

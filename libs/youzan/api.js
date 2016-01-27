@@ -13,7 +13,10 @@ var _ = require('underscore')
  * @constructor
  */
 var post = function (params, callback) {
-    var u = URL.parse(cfg.YOUZAN_URL);
+    var auth = cfg.get_auth('youzan', params.app_type);
+    var u = URL.parse(auth.u);
+
+    delete params.app_type;
     
     request('POST', u.hostname, u.path, u.port, {}, querystring.stringify(params), callback);
 }

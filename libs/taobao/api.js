@@ -20,8 +20,11 @@ var _ = require('underscore')
  * @constructor
  */
 var post = function (params, callback) {
+    
+    var auth = cfg.get_auth('taobao', params.app_type);
+
     _.extend(params, {
-        app_key: cfg.TAOBAO_APPKEY,
+        app_key: auth.k,
         method: params.method,
         session: params.access_token,
         timestamp: moment(new Date()).format('YYYY-MM-DD HH:mm:ss').toString(),
@@ -31,10 +34,11 @@ var post = function (params, callback) {
     });
 
     delete params.access_token;
+    delete params.app_type;
 
-    params.sign = _genSign(params, cfg.TAOBAO_APPSECRET);
+    params.sign = _genSign(params, auth.s);
 
-    var u = URL.parse(cfg.TAOBAO_URL);
+    var u = URL.parse(auth.u);
 
     request('POST', u.hostname, u.pathname, u.port, {}, querystring.stringify(params), callback);
 }

@@ -19,8 +19,8 @@ var _appParam = function(pam) {
  * @return {String}
  * @constructor
  */
-var _buildUrl = function(pam) {
-    var url = cfg.JOS_URL + '?';
+var _buildUrl = function(uri, pam) {
+    var url = uri + '?';
 
     _.each(pam, function(v, k) {
         url += k + '=' + encodeURIComponent(v) + '&'; 
@@ -56,7 +56,7 @@ var post = function (params, callback) {
 
     sp.sign = _genSign(_.extend(sp, ap), auth.s);
 
-    var u = URL.parse(_buildUrl(sp));
+    var u = URL.parse(_buildUrl(auth.u, sp));
     
     request('POST', u.hostname, u.path, u.port, {}, querystring.stringify(ap), callback);
 }
