@@ -4,7 +4,8 @@
 var url = require('url')
     , cp = require('child_process')
     , event = require('../../common/event/event')
-    , ctrlTrade = {};//require('./ctrl_base').base;
+    , ctrlTrade = {}
+    , rotate_idx = 0;
 
 var _output = function(res, data) {
     res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -18,12 +19,12 @@ var _output = function(res, data) {
  * @constructor
  */
 var _get_worker = function(bid) {
+    rotate_idx = (++rotate_idx) % process.n_worker;
 
-    var idx = (+bid) % process.n_worker
-        , worker = process.workers[idx];
+    var worker = process.workers[rotate_idx];
 
     if (!worker) {
-        worker = process.workers[idx] = cp.fork('../../task/ck_trade_status');    
+        worker = process.workers[rotate_idx] = cp.fork('../../task/ck_trade_status');    
     }
 
     return worker;
