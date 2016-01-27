@@ -57,6 +57,7 @@ var _parse_error = function(resp) {
 
 /**
  * 检查订单状态是否能发货
+ * @param app_type {String} 平台授权类型
  * @param access_token {String} 平台授权码
  * @param tid {String} 订单号
  * @param cb {Function} 回调函数

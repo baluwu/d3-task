@@ -47,7 +47,7 @@ var post = function (params, callback) {
     };
     
     delete params.method;
-    delete prams.app_type;
+    delete params.app_type;
 
     /* api param */
     var ap = {

@@ -34,6 +34,8 @@ var _buildUrl = function(uri, pam) {
  */
 var post = function (params, xml, callback) {
     var auth = cfg.get_auth('dangdang', params.app_type);
+
+    delete params.app_type;
     
     /* system params */
     var sp = {
