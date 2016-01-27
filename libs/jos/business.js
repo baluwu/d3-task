@@ -15,9 +15,10 @@ var _parse_error = function(resp) {
     catch (e) { return '获取订单数据出错'; }
 
     var r = o.order_get_response;
+    var e = o.error_response;
 
-    if (!r || r.code !== '0') {
-        error = '无法获取订单数据';
+    if ((!r || r.code !== '0') || e) {
+        error = (e && e.zh_desc) || '无法获取订单数据';
     }
     else {
         var s = r.order ? r.order.orderInfo.order_state : '';
