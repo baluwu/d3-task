@@ -43,9 +43,7 @@ var _parse_error = function(resp) {
             var ords = o.trade && o.trade.orders ? o.trade.orders.order : '';
 
             ords.forEach(function(v) {
-                if (!(v.refund_status == 'NO_REFUND' || 
-                    v.refund_status == 'CLOSED')) {
-                    
+                if (v.refund_status != 'NO_REFUND') {
                     error = '订单商品有退款';
                 }
             });
