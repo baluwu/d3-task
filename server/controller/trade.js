@@ -2,6 +2,7 @@
 'use strict';
 
 var url = require('url')
+    , moment = require('moment')
     , cp = require('child_process')
     , event = require('../../common/event/event')
     , ctrlTrade = {}
@@ -77,7 +78,8 @@ ctrlTrade.check_status = function(res, req, body) {
 
             var et = (new Date()).getTime();
 
-            console.log('Handle check %d trades, bid: %d, call_id: %s, use: %d ms',
+            console.log('%s: check %d trades, bid: %d, call_id: %s, use: %d ms',
+                moment(new Date()).format('YYYY-MM-DD HH:mm:ss').toString(),
                 ci.length, body.bid, callid, et - st
             );
 
