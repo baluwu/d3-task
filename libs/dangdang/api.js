@@ -15,10 +15,10 @@ var  _ = require("underscore")
  * @return {String}
  * @constructor
  */
-var _buildUrl = function(pam) {
+var _buildUrl = function(uri, pam) {
     pam = _keySort(pam);
 
-    var url = cfg.DANGDANG_URL + '?';
+    var url = uri + '?';
 
     _.each(pam, function(v, k) {
         url += k + '=' + encodeURIComponent(v) + '&'; 
@@ -33,19 +33,22 @@ var _buildUrl = function(pam) {
  * @constructor
  */
 var post = function (params, xml, callback) {
+    var auth = cfg.get_auth('dangdang', params.app_type);
+
+    delete params.app_type;
     
     /* system params */
     var sp = {
         method: params.method,
         timestamp: moment(new Date()).format('YYYY-MM-DD HH:mm:ss').toString(),
         format: 'xml',
-        app_key: cfg.DANGDANG_APPKEY,
+        app_key: auth.k,
         v: '1.0',
         sign_method: 'md5',
         session: params.access_token
     };
 
-    sp.sign = _genSign(sp, cfg.DANGDANG_APPSECRET);
+    sp.sign = _genSign(sp, auth.s);
     
     delete params.method;
     delete params.access_token;
@@ -53,7 +56,7 @@ var post = function (params, xml, callback) {
     /* api param */
     var ap = _.extend(sp, params);
 
-    var u = URL.parse(_buildUrl(sp)); 
+    var u = URL.parse(_buildUrl(auth.u, sp)); 
     
     request(
         'POST', 

@@ -19,8 +19,8 @@ var _appParam = function(pam) {
  * @return {String}
  * @constructor
  */
-var _buildUrl = function(pam) {
-    var url = cfg.JOS_URL + '?';
+var _buildUrl = function(uri, pam) {
+    var url = uri + '?';
 
     _.each(pam, function(v, k) {
         url += k + '=' + encodeURIComponent(v) + '&'; 
@@ -35,26 +35,28 @@ var _buildUrl = function(pam) {
  * @constructor
  */
 var post = function (params, callback) {
-    
+    var auth = cfg.get_auth('jos', params.app_type);
+
     /* system params */
     var sp = {
         access_token: params.access_token,
-        app_key: cfg.JOS_APPKEY,
+        app_key: auth.k,
         v: '2.0',
         timestamp: moment(new Date()).format('YYYY-MM-DD HH:mm:ss').toString(),
         method: params.method
     };
     
     delete params.method;
+    delete params.app_type;
 
     /* api param */
     var ap = {
         '360buy_param_json': _appParam(params.param_json)   
     };
 
-    sp.sign = _genSign(_.extend(sp, ap), cfg.JOS_APPSECRET);
+    sp.sign = _genSign(_.extend(sp, ap), auth.s);
 
-    var u = URL.parse(_buildUrl(sp));
+    var u = URL.parse(_buildUrl(auth.u, sp));
     
     request('POST', u.hostname, u.path, u.port, {}, querystring.stringify(ap), callback);
 }

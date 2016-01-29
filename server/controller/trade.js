@@ -38,13 +38,17 @@ var _get_worker = function(bid) {
  * @constructor
  */
 ctrlTrade.check_status = function(res, req, body) {
-
+    
     var self = this, ci, worker
         , st = (new Date()).getTime()
         , resp = { msg: '', succ: false, data: '' };
 
     if (!body.bid) {
         resp.msg = 'no params: bid';
+        _output(res, resp);
+    }
+    else if (!body.app_type) {
+        resp.msg = 'no params: app_type';
         _output(res, resp);
     }
     else if (!body.check_info) {
@@ -62,7 +66,7 @@ ctrlTrade.check_status = function(res, req, body) {
         var call_id = event.register_context(res);
 
         /* register CK_FIN event */
-        event.register_event('CK_FIN', function(callid, data) {
+        event.register_event('CK_FIN', function(callid, app_type, data) {
             resp.data = data;
             resp.succ = !data.length;
             
@@ -88,7 +92,7 @@ ctrlTrade.check_status = function(res, req, body) {
         event.start(worker);
 
         /* send message to child process */
-        worker.send({ type: 'CK_TRADE_ST', call_id: call_id, params: ci });
+        worker.send({ type: 'CK_TRADE_ST', call_id: call_id, app_type: body.app_type, params: ci });
     }
 };
 

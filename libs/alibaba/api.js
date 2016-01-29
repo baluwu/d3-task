@@ -1,7 +1,7 @@
 
 'use strict';
 
-var  _ = require("underscore")
+var  _ = require('underscore')
     , moment = require('moment')
     , URL = require('url')
     , crypto = require('crypto')
@@ -15,7 +15,7 @@ var  _ = require("underscore")
  * @return {String}
  * @constructor
  */
-var _buildUrl = function(sys_pam, api_pam) {
+var _buildUrl = function(uri, sys_pam, api_pam) {
     var arr = []
         , str = '';
 
@@ -25,7 +25,7 @@ var _buildUrl = function(sys_pam, api_pam) {
 
     str = arr.join('/');
 
-    var url = cfg.ALIBABA_URL + '/' + str + '?';
+    var url = uri + '/' + str + '?';
 
     _.each(api_pam, function(v, k) {
         url += k + '=' + encodeURIComponent(v) + '&'; 
@@ -40,6 +40,7 @@ var _buildUrl = function(sys_pam, api_pam) {
  * @constructor
  */
 var post = function (params, callback) {
+    var auth = cfg.get_auth('alibaba', params.app_type);
     
     /* system params */
     var sp = {
@@ -47,14 +48,15 @@ var post = function (params, callback) {
         version: '1',
         namespace: 'cn.alibaba.open',
         method: params.method,
-        app_key: cfg.ALIBABA_APPKEY
+        app_key: auth.k
     };
     
     delete params.method;
+    delete params.app_type;
 
-    params._aop_signature = _genSign(sp, params, cfg.ALIBABA_APPSECRET);
+    params._aop_signature = _genSign(sp, params, auth.s);
 
-    var u = URL.parse(_buildUrl(sp, params));
+    var u = URL.parse(_buildUrl(auth.u, sp, params));
     
     request('POST', u.hostname, u.path, u.port, {}, '', callback);
 }

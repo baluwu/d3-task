@@ -57,13 +57,15 @@ var _parse_error = function(resp) {
 
 /**
  * 检查订单状态是否能发货
+ * @param app_type {String} 平台授权类型
  * @param access_token {String} 平台授权码
  * @param tid {String} 订单号
  * @param cb {Function} 回调函数
  * @constructor
  */
-exports.check_trade_status = function(access_token, tid, cb) {
+exports.check_trade_status = function(app_type, access_token, tid, cb) {
     var p = {
+        app_type: app_type,
         access_token: access_token,
         method: 'taobao.trade.get',
         fields: 'status,orders',
