@@ -15,26 +15,21 @@ module.exports.start = function(route) {
         
         if (req.method == 'POST') {
 
-            var buffers = [], nread = 0;
+            var buffers = [], nread = 0, body = '';
 
-            /* trunck is a instance of Buffer */
             req.on('data', function(trunk) { 
-
                 /* too much POST data, kill the connection! */
                 /* 1e6 === 1 * Math.pow(10, 6) === 1 * 1000000 ~~~ 1MB */
-                if (body.length > 1e6) {
+                if (nread > 1e6) {
+                    console.log('POST data overdue');
                     return req.connection.destroy();
                 }
 
-                buffers.push(trunk);
+                body += trunk;
                 nread += trunk.length;
             });
 
             req.on('end', function() { 
-                var body = Buffer.concat(buffers, nread).toString();
-                console.dir(body);
-                process.exit();
-
                 route(act, res, req, querystring.parse(body));
             });
         }
