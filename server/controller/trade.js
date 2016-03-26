@@ -5,15 +5,11 @@ var url = require('url')
     , moment = require('moment')
     , cp = require('child_process')
     , event = require('../../common/event/event')
+    , http = require('../../common/http/http')
     , ctrlTrade = {}
     , rotate_idx = 0;
 
-var _output = function(res, data) {
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.write(JSON.stringify(data));
-    res.end();
-};
-
+var _output = function(res, data, status) { http.response(res, data, status || 500, 'JSON'); };
 /**
  * get work process
  * @param bid business_id
@@ -78,7 +74,7 @@ ctrlTrade.check_status = function(res, req, body) {
             /* get context by call_id */
             var response = event.get_context(callid);
             
-            _output(response, resp);
+            _output(response, resp, 200);
 
             var et = (new Date()).getTime();
 

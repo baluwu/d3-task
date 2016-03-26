@@ -81,3 +81,21 @@ exports.post = exports.get = function(url, post_data, headers, cb) {
 
     req.end();
 };
+
+exports.reponse = function(res, data, status, type, headers) {
+    type = type || 'html';
+
+    var isJson = type && type.toUpperCase() === 'JSON';
+
+    headers = headers || {};
+    headers['Content-Type'] = isJson ? 'application/json' : 'text/html';
+
+    res.writeHead(
+        status || 200, 
+        headers
+    );
+
+    res.write(isJson ? JSON.stringify(data) : data);
+
+    res.end();
+};
