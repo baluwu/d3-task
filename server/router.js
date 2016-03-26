@@ -1,8 +1,12 @@
 
+'use strict';
+
+var cached_valid_routes = {};
+
 exports.route = function(pathname, res, req, body) {
 
-    var out_error = function(error) {
-        res.writeHead(500, {"Content-Type": "text/html"});
+    var out_error = function(error, code) {
+        res.writeHead(code || 404, {"Content-Type": "text/html"});
         res.write(error);
         res.end();
     };
@@ -11,24 +15,33 @@ exports.route = function(pathname, res, req, body) {
 
     if (ca.length == 3) {
 
-        var ctrl = ca[1], act = ca[2], fs = require('fs'),
-            ctrl_file = './controller/' + ctrl + '.js';
+        var ctrl = ca[1]
+            , act = ca[2]
+            , fs = require('fs')
+            , r_k = ctrl + '/' + act
+            , h_d = cached_valid_routes[r_k]
+            , ctrl_file = './controller/' + ctrl + '.js';
 
-        fs.stat(ctrl_file, function(error, stats) {
+        if (h_d) {
+            console.log('use cached router');
+            h_d(res, req, body);    
+        }
+        else fs.stat(ctrl_file, function(error, stats) {
             if (error) {
-                return out_error('No controller named ' + ctrl + ' found');
+                return out_error("No controller named ${ctrl} found");
             }
-
+            
             var handler = require(ctrl_file).handler;
             if (handler && handler[act]) {
-                handler[act](res, req, body);       
+                h_d = cached_valid_routes[r_k] = handler[act];
+                h_d(res, req, body);       
             }
             else {
-                out_error('No act named ' + act + ' found in controller ' + ctrl);
+                out_error("No act named ${act} found in controller ${ctrl}");
             }
         });
     }
     else {
-        out_error('pasrse error');
+        out_error('pasrse error', 500);
     }
 };

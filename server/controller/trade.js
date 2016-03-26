@@ -44,7 +44,11 @@ ctrlTrade.check_status = function(res, req, body) {
         , st = (new Date()).getTime()
         , resp = { msg: '', succ: false, data: '' };
 
-    if (!body.bid) {
+    if (!body) {
+        resp.msg = 'service only surpport POST method';
+        _output(res, resp);
+    }
+    else if (!body.bid) {
         resp.msg = 'no params: bid';
         _output(res, resp);
     }
