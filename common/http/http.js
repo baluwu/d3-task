@@ -1,89 +1,83 @@
+/**
+ * Copyright(c) 2013-2015 www.diansan.com
+ *
+ * @file http.js 
+ * @author W.G 2015-08-13
+ * @version 1.0
+ * @description http wrapper
+ */
+
 'use strict';
 
-var http = require('http')
-    , https = require('https')
-    , querystring = require('querystring')
-    , _ = require('underscore')
-    , env = require('../../config/server').ENV;
+var util = require('util'), extend = util._extend,
+    qstr = require('querystring');
 
-/**
- * HTTP Post请求
- * @param type POST or GET
- * @param host 主机名
- * @param path 请求路径
- * @param port 端口
- * @param data {String} 请求的body参数 
- * @param head {Object} 请求头 
- * @param callback 回调函数
- * @constructor
- */
-var _httpRequest = function (type, host, path, port, head, data, callback) {
+exports.post = exports.get = function(url, post_data, headers, cb) {
     
-    var result = ''
-        , called = 0
-        , timeout
-        , post_data = data;
+    var timeout, uri = require('url').parse(url), post_string = ''; 
 
-    var options = {
-        hostname: host,
-        port: port || 80,
-        path: path || '/',
-        method: type || 'POST',
-        headers: _.extend({
-            'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8',
-            'Content-Length': post_data.length,
-            'timeout': 150000
-        }, head)
+    uri.port = (uri.protocol == 'https:') ? 443 : 80;
+
+    if (!uri || !uri.hostname || !uri.port || !uri.path) {
+        return cb('PARSE_URL_ERROR', null);        
+    }
+
+    if (util.isArray(post_data)) {
+        post_string = qstr.stringify(post_data);
+    }
+    else if (typeof post_data === 'object') {
+        post_string = JSON.stringify(post_data);
+    }
+    else if(typeof post_data === 'string') {
+        post_string = post_data;
+    }
+
+    var http_param = {
+        host: uri.hostname,
+        port: uri.port,
+        path: uri.path,
+        method: post_data ? 'POST' : 'GET',
+        agent: false,
+        headers: extend({
+            'Content-Type': "application/x-www-form-urlencoded;charset=utf-8",
+            'Content-Length': post_string ? post_string.length : 0,
+            'Keep-Alive': true,
+            'timeout': 5000
+        }, headers || {})
     };
 
-    var req = (options.port == 80 ? http : https).request(options, function (res) {
+    var req = (
+            uri.port == 443 ? 
+            require('https') : require('http')
+        ).request(http_param, function(res) {
+
         res.setEncoding('utf8');
 
+        var data = '';
+
         res.on('data', function (chunk) {
-            result += chunk;
+            data += chunk;
         });
 
-        res.on('end', function (chunk) {
-            if (env == 'DEV' || env == 'TEST') {
-                console.log(result);
-            }
+        res.on('end', function() {
+            cb(null, data);
+        });
 
-            if (!called) {
-                called = 1;
-                callback(null, result);
-            }
+    });
+
+    req.on('socket', function (socket) {
+        socket.setTimeout(5000);  
+        socket.on('timeout', function() {
+            req.abort();
         });
     });
 
-    req.on('error', function (e) {
-        console.log('problem with request: ' + e.message);
-
-        if (!called) {
-            called = 1;
-            console.log('callback when http error:' + e.message);
-            callback(e.message, null);
-        }
+    req.on('error', function(err) {
+        console.log(err); 
+        cb(err, null);
     });
 
-    req.on('timeout', function() {
-        if (!called) {
-            called = 1;
-            callback('接口超时', null);
-        }
+    post_string && req.write(post_string + '\n');
 
-        clearTimeout(timeout);
-
-        if (req.res) {
-            req.res.emit('abort');
-        }
-
-        req.abort();
-    });
-
-    timeout = setTimeout(function() { req.emit('timeout'); }, 10000);
-
-    data.length > 0 && req.write(post_data + '\n');
     req.end();
 };
-
-exports.request = _httpRequest;
