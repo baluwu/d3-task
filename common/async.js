@@ -1,7 +1,7 @@
 
 'use strict';
 
-exports.serial = function (arr, fn, cb) {
+exports.eachSerial = function (arr, fn, cb) {
     var l = arr.length, ret = [];
 
     function* g() {
@@ -15,10 +15,12 @@ exports.serial = function (arr, fn, cb) {
     more();
 
     function more() {
-        if (it.done) { return cb(null, ret); }
+        if (it.done) { 
+            return cb(null, ret); 
+        }
 
         fn(it.value, function(err, r) {
-            if (err) { cb(error, null); }
+            if (err) { cb(err, ret); }
             else {
                 ret.push(r);    
                 it = gi.next();
@@ -28,8 +30,9 @@ exports.serial = function (arr, fn, cb) {
     }
 }
 
-exports.parallel = function (arr, fn, cb) {
-    var l = arr.length, tmp = {}, n_call = 0;
+exports.each = function (arr, fn, cb) {
+    var l = arr.length, tmp = {},
+        n_call = 0, error = 0;
 
     function* g() {
         for (var i = 0; i < l; i++) {
@@ -42,12 +45,13 @@ exports.parallel = function (arr, fn, cb) {
     more(gi.next());
 
     function more(it) {
-        if (it.done) { return ; }
+        if (it.done || error) { return ; }
     
         fn(it.value, function(err, r) {
             n_call++;
 
             if (err) {
+                error = err;
                 cb(error, null);
             }
             else {
