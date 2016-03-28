@@ -1,7 +1,7 @@
 
 'use strict';
 
-var response = require('common/http/http').response;
+var response = require('../common/http/http').response;
 var cached_valid_routes = {};
 
 exports.route = function(pathname, res, req, body) {
@@ -21,7 +21,7 @@ exports.route = function(pathname, res, req, body) {
         if (h_d) { h_d(res, req, body); }
         else fs.exists(file, function(exist) {
             if (!exist) {
-                return response(res, `No controller named ${ctrl} found`);
+                return response(res, `No controller named ${ctrl} found`, 404);
             }
             
             var handler = require(ctrl_file).handler;
