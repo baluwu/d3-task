@@ -1,12 +1,7 @@
 
 'use strict';
 
-var fs = require('fs');
-var arr = [
-    'test1', 'test2', 'test3', 'test4'
-];
-
-function serial(arr, fn, cb) {
+exports.serial = function (arr, fn, cb) {
     var l = arr.length, ret = [];
 
     function* g() {
@@ -20,14 +15,10 @@ function serial(arr, fn, cb) {
     more();
 
     function more() {
-        if (it.done) {
-            return cb(null, ret);
-        }
+        if (it.done) { return cb(null, ret); }
 
         fn(it.value, function(err, r) {
-            if (err) {
-                cb(error, null);
-            }
+            if (err) { cb(error, null); }
             else {
                 ret.push(r);    
                 it = gi.next();
@@ -37,8 +28,41 @@ function serial(arr, fn, cb) {
     }
 }
 
-serial(arr, function(el, icb) { 
-    fs.exists('test.md', function(err) {
-        icb(null, 1); 
-    });
-}, function(err, r) { console.dir(r); });
+exports.parallel = function (arr, fn, cb) {
+    var l = arr.length, tmp = {}, n_call = 0;
+
+    function* g() {
+        for (var i = 0; i < l; i++) {
+            yield arr[i]    
+        }   
+    }
+
+    var gi = g();
+
+    more(gi.next());
+
+    function more(it) {
+        if (it.done) { return ; }
+    
+        fn(it.value, function(err, r) {
+            n_call++;
+
+            if (err) {
+                cb(error, null);
+            }
+            else {
+                tmp[it.value] = r;    
+
+                if (n_call === l) {
+                    var ret = [];
+                    for (var x = 0; x < l; x++) {
+                        ret.push(tmp[arr[x]]);
+                    }
+                    return cb(null, ret)
+                }
+            }
+        });
+
+        more(gi.next());
+    }
+}
