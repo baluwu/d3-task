@@ -10,6 +10,7 @@ var url = require('url')
     , rotate_idx = 0;
 
 var _output = function(res, data, status) { http.response(res, data, status || 500, 'JSON'); };
+
 /**
  * get work process
  * @param bid business_id
