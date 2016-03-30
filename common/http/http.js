@@ -13,7 +13,6 @@ var util = require('util'), extend = util._extend,
     qstr = require('querystring');
 
 exports.post = exports.get = function(url, post_data, headers, cb) {
-    
     var timeout, uri = require('url').parse(url), post_string = ''; 
 
     uri.port = (uri.protocol == 'https:') ? 443 : 80;
@@ -25,18 +24,13 @@ exports.post = exports.get = function(url, post_data, headers, cb) {
     if (util.isArray(post_data)) {
         post_string = qstr.stringify(post_data);
     }
-    else if (typeof post_data === 'object') {
-        post_string = JSON.stringify(post_data);
-    }
-    else if(typeof post_data === 'string') {
-        post_string = post_data;
-    }
+    else post_string = String(post_data);
 
     var http_param = {
         host: uri.hostname,
         port: uri.port,
         path: uri.path,
-        method: post_data ? 'POST' : 'GET',
+        method: post_string ? 'POST' : 'GET',
         agent: false,
         headers: extend({
             'Content-Type': "application/x-www-form-urlencoded;charset=utf-8",
