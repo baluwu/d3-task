@@ -28,6 +28,19 @@ var _get_worker = function(bid) {
     return worker;
 };
 
+ctrlTrade.download_trade = function(res, req, body) {
+    var resp = { msg: '', succ: false, data: '' };
+
+    if (!body || !body.bid || !body.seller_nick || 
+        !body.last_trans_time || !body.trans_end_time) {
+        
+        resp.msg = 'params not complete';
+        return _output(res, resp);
+    }
+
+    
+}
+
 /**
  * dispatch task to work process
  * @param res http.response
