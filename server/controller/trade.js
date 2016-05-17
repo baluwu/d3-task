@@ -99,6 +99,4 @@ ctrlTrade.check_status = function(res, req, body) {
     }
 };
 
-
-
 exports.handler = ctrlTrade;
