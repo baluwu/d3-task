@@ -1,4 +1,4 @@
-#! /usr/local/bin/node
+#!/usr/local/bin/node
 
 var server = require('./server')
     , router = require('./router')

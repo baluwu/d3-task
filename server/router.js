@@ -1,34 +1,41 @@
 
-exports.route = function(pathname, res, req, body) {
+'use strict';
 
-    var out_error = function(error) {
-        res.writeHead(500, {"Content-Type": "text/html"});
-        res.write(error);
-        res.end();
-    };
+var response = require('../common/http/http').response;
+var cached_valid_routes = {};
+
+exports.route = function(pathname, res, req, body) {
 
     var ca = pathname.split('/', 3);
 
     if (ca.length == 3) {
 
-        var ctrl = ca[1], act = ca[2], fs = require('fs'),
-            ctrl_file = './controller/' + ctrl + '.js';
+        var 
+            ctrl = ca[1]
+            , act = ca[2]
+            , fs = require('fs')
+            , r_k = ctrl + '/' + act
+            , h_d = cached_valid_routes[r_k]
+            , file = './controller/' + ctrl + '.js';
 
-        fs.stat(ctrl_file, function(error, stats) {
-            if (error) {
-                return out_error('No controller named ' + ctrl + ' found');
+        if (h_d) { h_d(res, req, body); }
+        else fs.exists(file, function(exist) {
+            if (!exist) {
+                return response(res, `No controller named ${ctrl} found`, 404);
             }
+            
+            var handler = require(file).handler;
 
-            var handler = require(ctrl_file).handler;
             if (handler && handler[act]) {
-                handler[act](res, req, body);       
+                h_d = cached_valid_routes[r_k] = handler[act];
+                h_d(res, req, body);       
             }
             else {
-                out_error('No act named ' + act + ' found in controller ' + ctrl);
+                response(res, `No act named ${act} found in controller ${ctrl}`, 404);
             }
         });
     }
     else {
-        out_error('pasrse error');
+        response(res, 'pasrse error', 404);
     }
 };

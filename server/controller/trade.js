@@ -5,14 +5,11 @@ var url = require('url')
     , moment = require('moment')
     , cp = require('child_process')
     , event = require('../../common/event/event')
+    , http = require('../../common/http/http')
     , ctrlTrade = {}
     , rotate_idx = 0;
 
-var _output = function(res, data) {
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.write(JSON.stringify(data));
-    res.end();
-};
+var _output = function(res, data, status) { http.response(res, data, status || 500, 'JSON'); };
 
 /**
  * get work process
@@ -31,6 +28,31 @@ var _get_worker = function(bid) {
     return worker;
 };
 
+ctrlTrade.download_trades = function(res, req, body) {
+    var resp = { msg: '', succ: false, data: '' };
+
+    if (!body || !body.platform || !body.access_token || 
+        !body.bid || !body.app_type || !body.seller_nick || 
+        !body.last_trans_time || !body.trans_end_time) {
+        
+        resp.msg = 'params not complete';
+        return _output(res, resp);
+    }
+
+    if (!body.page) body.page = 0;
+    if (!body.page_size) body.page_size = 100;
+
+    var mod = require('../../libs/' + body.platform + '/business');
+    mod.download_trades(body.app_type, body).then(() => {
+        resp.msg = '下载完成';
+        resp.succ = true;
+        return _output(res, resp, 200);
+    }).catch(err => {
+        resp.msg = err.toString();
+        return _output(res, resp);
+    }); 
+}
+
 /**
  * dispatch task to work process
  * @param res http.response
@@ -44,7 +66,11 @@ ctrlTrade.check_status = function(res, req, body) {
         , st = (new Date()).getTime()
         , resp = { msg: '', succ: false, data: '' };
 
-    if (!body.bid) {
+    if (!body) {
+        resp.msg = 'service only surpport POST method';
+        _output(res, resp);
+    }
+    else if (!body.bid) {
         resp.msg = 'no params: bid';
         _output(res, resp);
     }
@@ -74,7 +100,7 @@ ctrlTrade.check_status = function(res, req, body) {
             /* get context by call_id */
             var response = event.get_context(callid);
             
-            _output(response, resp);
+            _output(response, resp, 200);
 
             var et = (new Date()).getTime();
 
@@ -97,7 +123,5 @@ ctrlTrade.check_status = function(res, req, body) {
         worker.send({ type: 'CK_TRADE_ST', call_id: call_id, app_type: body.app_type, params: ci });
     }
 };
-
-
 
 exports.handler = ctrlTrade;

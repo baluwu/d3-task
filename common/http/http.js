@@ -48,42 +48,38 @@ var _httpRequest = function (type, host, path, port, head, data, callback) {
                 console.log(result);
             }
 
-            if (!called) {
-                called = 1;
-                callback(null, result);
-            }
+            callback(null, result);
+        });
+    });
+
+    req.on('socket', function (socket) {
+        socket.setTimeout(5000);  
+        socket.on('timeout', function() {
+            req.abort();
         });
     });
 
     req.on('error', function (e) {
-        console.log('problem with request: ' + e.message);
-
-        if (!called) {
-            called = 1;
-            console.log('callback when http error:' + e.message);
-            callback(e.message, null);
-        }
+        console.log(err); 
+        cb(err, null);
     });
-
-    req.on('timeout', function() {
-        if (!called) {
-            called = 1;
-            callback('接口超时', null);
-        }
-
-        clearTimeout(timeout);
-
-        if (req.res) {
-            req.res.emit('abort');
-        }
-
-        req.abort();
-    });
-
-    timeout = setTimeout(function() { req.emit('timeout'); }, 10000);
 
     data.length > 0 && req.write(post_data + '\n');
+
     req.end();
 };
 
 exports.request = _httpRequest;
+
+exports.response = function(res, data, status, type, headers) {
+    type = type || 'html';
+
+    var isJson = type && type.toUpperCase() === 'JSON';
+
+    headers = headers || {};
+    headers['Content-Type'] = isJson ? 'application/json' : 'text/html';
+
+    res.writeHead(status || 200, headers);
+    res.write(isJson ? JSON.stringify(data) : data);
+    res.end();
+};
