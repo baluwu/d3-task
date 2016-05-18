@@ -1,0 +1,454 @@
+/**
+ * Copyright(c) 2013-2015 www.diansan.com
+ *
+ * @file mysql.js 
+ * @author W.G 2015-08-12
+ * @version 1.0
+ * @description mysql database wrapper
+ */
+
+'use strict';
+
+var async = require('async'),
+    mysql = require('mysql'),
+    CFG = require('../../config'),
+    mutil = require('../utils'),
+    array = require('../array'),
+    array_unique = array.array_unique,
+    is_array = array.is_array,
+    table = require('./tables').table,
+    util = require('util'),
+    env = CFG.RUN_ENV,
+    private_rds = CFG.PRIVATE_RDS;
+
+var DB = {
+
+    pools: {},
+
+    sql: '',
+
+    set_bid: function(bid) { DB.bid = bid; },
+
+    /*获取分库的database name*/
+    db: function(tb, bid) {
+        var id = bid || DB.bid || 0;
+
+        /* 分库 */
+        if (private_rds[bid]) {
+            return private_rds[bid]['database'];
+        }
+        else if (table[tb]) {
+            return CFG['DB'][env][('otherdb' + (id % 10))]['database'];           
+        }
+        /* 系统数据库 */
+        else {
+            return CFG['DB'][env]['default']['database'];
+        }
+    },
+
+    /*获取分库的table name*/
+    tb: function(tb, bid) {
+        var r = tb, id = bid || DB.bid, i10 = Math.floor(id / 10);
+
+        if (private_rds[bid]) {
+            return tb;    
+        }
+
+        var calFunc = {
+            1: function() { return tb; },
+            100: function() { return tb + '_' + (i10 % 100); },
+            2: function() { return tb + '_' + (i10 % 1000); },
+            1000: function() { return bid >= 2300 ? (tb + '_' + (i10 % 1000)) : (tb + '_' + (i10 % 100)); },
+            101000: function() { return bid >= 2300 ? (tb + '_' + (i10 % 10000)) : (tb + '_' + (i10 % 100)); }
+        };
+
+        var key = table[tb];
+
+        return key ? calFunc[key]() : tb;
+    },
+
+    from: function(tb) {
+        DB.table_name = tb;
+        return DB;
+    },
+
+    field: function(fld) {
+        DB.fields = fld;
+        return DB;
+    },
+
+    where: function(w) {
+        var where = [];
+
+        for(var k in w) {
+
+            var v = w[k];
+
+            if (typeof v === 'string') {
+                where.push( k + '=\'' + v + '\'' );
+            }
+            else if (typeof v === 'object') {
+                where.push(
+                    k + v.op + (v.should_quoto ? '\'' : '') + v.lv + (v.should_quoto ? '\'' : '') 
+                );
+            }
+            else {
+                where.push( k + '=' + v);
+            }
+        }
+
+        DB.condition = where.join(' AND ');
+        return DB;
+    },
+
+    limit: function(offset, page_size) {
+        DB.limits = ' LIMIT ' + offset + ', ' + page_size;
+        return DB;
+    },
+
+    orderBy: function(odb, sort) {
+        DB.order_by = ' ORDER BY `' + odb + '` ' + sort;
+        return DB;
+    },
+
+    groupBy: function(odb, sort) {
+        DB.group_by = ' GROUP BY `' + odb + '` ' + sort;
+        return DB;
+    },
+
+    exec: function(bid, cb) {
+        if (!DB.table_name) return false;
+        
+        var sql = [
+            'SELECT ',
+            DB.fields || '*',
+            ' FROM {',
+            DB.table_name,
+            '} WHERE ',
+            (DB.condition || '1=1') + ' ',
+            (DB.order_by || '') + ' ',
+            (DB.group_by || '') + ' ',
+            DB.limits || ''
+        ].join('');
+
+        DB.query(sql, cb, bid);
+    },
+
+    doExec: function(bid) {
+        if (!DB.table_name) return false;
+        
+        var sql = [
+            'SELECT ',
+            DB.fields || '*',
+            ' FROM {',
+            DB.table_name,
+            '} WHERE ',
+            (DB.condition || '1=1') + ' ',
+            (DB.order_by || '') + ' ',
+            (DB.group_by || '') + ' ',
+            DB.limits || ''
+        ].join('');
+
+        return DB.doQuery(bid, sql);
+    },
+
+    /*mysql connect pool*/
+    createMysqlPool: function(db, bid, is_split) {
+
+        if (DB['pools'][db]) {
+            return DB['pools'][db];
+        }
+
+        var idx_cfg = is_split ? ('otherdb' + (bid % 10)) : (db == 'platform_data_taobao' || db == 'platform_data_other' ? db : 'default'),
+            ret = DB['pools'][db] = mysql.createPool(CFG['DB'][env][idx_cfg]);
+        
+        return ret;
+    },
+
+    createConnection: function(tb, bid, idb, opt) {
+         
+        var db = idb || DB.db(tb, bid), is_split = table[tb] ? true : false, dbcfg;
+
+        if (is_split) {
+            if (private_rds[bid]) {
+                dbcfg = private_rds[bid];    
+            }
+            else {
+                dbcfg = CFG['DB'][env]['otherdb' + ((bid % 10) || '0')];
+            }
+        }
+        else {
+            dbcfg = CFG['DB'][env][(idb || 'default')];
+        }
+
+        opt && (dbcfg = util._extend(dbcfg, opt));
+
+        if (opt) console.dir(dbcfg);
+
+        //console.log1(db, tb, bid, idb, dbcfg);
+
+        var conn = mysql.createConnection(dbcfg);
+
+        conn.connect();
+
+        return conn;
+    },
+
+    getConnection: function(tb, bid, cb) {
+
+        var db = DB.db(tb, bid), pool = DB['pools'][db], is_split = table[tb] ? true : false;
+        if(!pool) {
+            pool = DB.createMysqlPool(db, bid, is_split);
+        }
+        
+        pool.getConnection(function(err, link) {
+            if (!!err) {
+                cb(err, null);
+                return console.error('[mysqlQueryError]' + err.stack);
+            }
+            if (link.charset) cb(pool, link);
+            else link.query('SET NAMES UTF8', function(err, r) {
+                if (err) cb(err, r);
+                else {
+                    link.charset = 'utf8';
+                    cb(pool, link);
+                }
+            });
+        });
+    }.stack,
+
+    doQuery: function(bid, sql, db) {
+        /*替换tables*/
+        var tables = sql.match(/\{[^\}]+\}/g), r_tb, link;
+
+        /*如果需要table转换*/
+        if (util.isArray(tables) && tables.length > 0) {
+            
+            tables = array_unique(tables);
+
+            var r_tb = '';
+
+            tables.forEach(function(tb) {
+                r_tb = tb.substr(1, tb.length - 2);
+                sql = sql.replace(
+                    new RegExp(tb, 'g'), DB.tb(r_tb, bid)
+                ); 
+            });
+        }
+        else {
+            r_tb = 'e_business_store';
+        }
+        
+        link = DB.createConnection(r_tb, bid, db);
+
+        if (!link) console.log1('connect database error');
+
+        return new Promise ((resolve, reject) => {
+            link.query(sql, (err, r) => {
+                err && console.log1('ERROR: ', err.stack, sql);
+
+                if (err) reject(Error(err));
+                else resolve(r);
+            });
+
+            link.end();
+        });
+    },
+
+    batch_query: function(multi_sql_str, bid, cb) {
+        /*替换tables*/
+        var tables = multi_sql_str.match(/\{[^\}]+\}/g), r_tb, link;
+
+        /*如果需要table转换*/
+        if (util.isArray(tables) && tables.length > 0) {
+            
+            tables = array_unique(tables);
+
+            var r_tb = '';
+
+            tables.forEach(function(tb) {
+                r_tb = tb.substr(1, tb.length - 2);
+                multi_sql_str = multi_sql_str.replace(
+                    new RegExp(tb, 'g'), DB.tb(r_tb, bid)
+                ); 
+            });
+        }
+        else {
+            r_tb = 'e_business_store';
+        }
+
+        link = DB.createConnection(r_tb, bid, null, { multipleStatements: true });
+
+        link.query(multi_sql_str, function(err, r) {
+            err && console.dir(err);
+            err && console.log1('exec sql error: ' + multi_sql_str);
+            cb(err, r);
+        });
+
+        link.end();
+    },
+
+    generate_add_sql: function(tb, datas) {
+        var flds = '', vals = [], init = false;
+        
+        if (is_array(datas)) {
+
+            datas.forEach(function(row) {
+
+                var val = '(';
+
+                for(var fld in row) {
+                    if (!init) {
+                        flds += '`' + fld + '`,';
+                    }
+                    
+                    if (typeof row[fld] === 'number') {
+                        val += row[fld] + ',';
+                    }
+                    else {
+                        val += '\'' + row[fld] + '\',';
+                    }
+                }
+                
+                if (!init) {
+                    flds = flds.substr(0, flds.length - 1);
+                    init = true;
+                }
+
+                val = val.substr(0, val.length - 1) + ')';
+
+                vals.push(val);
+
+            });
+
+            return 'INSERT INTO ' + '{' + tb + '}(' + flds + ') VALUES' + vals.join(',');
+        }
+        else if (typeof datas === 'object') {
+            for(var t in datas) {
+
+                var val = '(', row = datas[t];
+
+                for(var fld in row) {
+                    if (!init) {
+                        flds += '`' + fld + '`,';
+                    }
+                    
+                    if (typeof row[fld] === 'number') {
+                        val += row[fld] + ',';
+                    }
+                    else {
+                        val += '\'' + row[fld] + '\',';
+                    }
+                }
+                
+                if (!init) {
+                    flds = flds.substr(0, flds.length - 1);
+                    init = true;
+                }
+
+                val = val.substr(0, val.length - 1) + ')';
+                vals.push(val);
+            }
+
+            return 'INSERT INTO ' + '{' + tb + '}(' + flds + ') VALUES' + vals.join(',');
+
+        }
+        else return '';
+    },
+
+    generate_update_sql: function(tb, datas) {
+        var sqls = [];
+
+        if (is_array(datas)) {
+            datas.forEach(function(row) {
+                var sets = '', where = '';
+
+                for(var k in row['sets']) {
+                    var v = row['sets'][k];
+                    if (typeof v === 'number') {
+                        sets += k + '=' + v + ',';
+                    }
+                    else {
+                        sets += k + '=\'' + v + '\'' + ',';
+                    }
+                }
+                
+                if (sets == '') return '';
+
+                for(var k in row['where']) {
+                    var v = row['where'][k];
+
+                    where && (where += ' AND ');
+                    if (typeof v === 'number') {
+                        where += k + '=' + v;
+                    }
+                    else {
+                        where += k + '=\'' + v + '\''; 
+                    }
+                }
+
+                sqls.push('UPDATE {' + tb + '} SET ' + sets.substr(0, sets.length - 1) + ' WHERE ' + where);
+            });
+
+        }
+        
+        return sqls;
+    },
+
+    generate_delete_sql: function(tb, datas) {
+        var sqls = [];
+
+        if (is_array(datas)) {
+            datas.forEach(function(row) {
+                var where = '';
+
+                for(var k in row['where']) {
+                    var v = row['where'][k];
+
+                    where && (where += ' AND ');
+                    if (typeof v === 'number') {
+                        where += k + '=' + v;
+                    }
+                    else {
+                        where += k + '=\'' + v + '\''; 
+                    }
+                }
+
+                where && sqls.push('DELETE FROM {' + tb + '} WHERE ' + where);
+            });
+        }
+
+        return sqls;
+    },
+
+    doExecTrans: function(bid, sqls, tb) {
+        return new Promise( (resolve, reject) => {
+            var link = DB.createConnection(tb, bid);
+
+            if (!link) return reject(Error('CONN_DB_ERROR')); 
+
+            var pall = [];
+            link.beginTransaction((err) => {
+                pall.push(sqls.map((sql) => { 
+                    return DB.doQuery(bid, sql, tb);
+                }));
+
+                return Promise.all(pall).then( () => {
+                    link.commit(); link.end();    
+                    resolve(1);
+                }).catch(err => { 
+                    link.rollback(); link.end(); 
+                    reject(err);
+                });
+            });
+        });
+    },
+
+    release: function() {
+        for (var k in DB.pools) {
+            DB.pools[k].end();
+        }
+    }
+}; 
+
+module.exports = DB;

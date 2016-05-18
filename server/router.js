@@ -24,7 +24,7 @@ exports.route = function(pathname, res, req, body) {
                 return response(res, `No controller named ${ctrl} found`, 404);
             }
             
-            var handler = require(ctrl_file).handler;
+            var handler = require(file).handler;
 
             if (handler && handler[act]) {
                 h_d = cached_valid_routes[r_k] = handler[act];
