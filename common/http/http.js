@@ -60,8 +60,8 @@ var _httpRequest = function (type, host, path, port, head, data, callback) {
     });
 
     req.on('error', function (e) {
-        console.log(err); 
-        cb(err, null);
+        console.log(e); 
+        callback(e, null);
     });
 
     data.length > 0 && req.write(post_data + '\n');
