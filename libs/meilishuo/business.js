@@ -20,31 +20,28 @@ var _parse_error = function(resp) {
         error = '平台接口数据错误';
     }
     else {
-        var s = o.status;
+        var s = o.order_detail_get_response.info.order.status_text;
         
         var error_desc = {
-            3: '订单已发货',
-            5: '订单已完成',
-            7: '订单已关闭',
-            refund_s: {
-                1: '1', 2: '2', 3: '3', 5: '5', 7: '7'    
-            }
+            '等待付款': '订单未付款',
+            '等待确认收货': '订单已发货',
+            '交易成功': '订单已完成',
+            '交易关闭': '订单已关闭'
         };
 
         if(error_desc[s]) {
             error = error_desc[s];    
         }
-        else if (o.products) {
-            o.products.forEach(function(el) {
-                var rfs = el.refund_status;
-
-                if (error_desc.refund_s[rfs]) {
-                    error = error_desc.refund_s[rfs];    
+        else if (o.order_detail_get_response.info.goods) {
+            var orders = o.order_detail_get_response.info.goods;
+            orders.forEach(function(el) {
+                if (el.refund_status_text != '') {
+                    error = '订单有退款';
                 }
             });
         }
-        else if ('2' != s) {
-            error = '订单状态错误:' + s;
+        else {
+            error = '未知错误';
         }
     }
 
@@ -62,7 +59,8 @@ exports.check_trade_status = function(app_type, access_token, tid, cb) {
     var p = {
         app_type: app_type,
         access_token: access_token,
-		method: 'api/erp/v2/orders/' + (tid.tid || tid) + '.json'
+	order_id: tid,
+	method: 'meilishuo.order.detail.get'
     };
 
     api.post(p, function(err, resp) {
@@ -95,7 +93,7 @@ var fn = {
                     }
                     else {
                         if (v.add_trades[tid] === 0) v.add_trades[tid] = decode_utf8(resp);
-                        if (v.edit_trades[tid] === 0) v.edit_trades[tid] = decode_utf(resp);
+                        if (v.edit_trades[tid] === 0) v.edit_trades[tid] = decode_utf8(resp);
 
                         resolve(resp);
                     }

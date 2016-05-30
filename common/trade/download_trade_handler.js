@@ -54,8 +54,8 @@ module.exports = function(platform, app_type, session, seller_nick, fn, resp) {
         var p_sql = [];
         for (var tid in v.edit_trades ) {
             var resp = v.edit_trades[tid];
-            resp && p_update.push(
-                db.doQuery('update jdp_' + v.platform + '_trade set jdp_flag=0, jdp_modified=unix_timestamp(), jdp_response=\'' + 
+            resp && p_sql.push(
+                db.doQuery('update jdp_' + v.platform + '_trade set jdp_flag=0, jdp_modified=now(), jdp_response=\'' + 
                     v.edit_trades[tid] + '\' where tid=\'' + tid + '\'')
             );    
         }

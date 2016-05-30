@@ -30,7 +30,7 @@ var _get_worker = function(bid) {
 
 ctrlTrade.download_trades = function(res, req, body) {
     var resp = { msg: '', succ: false, data: '' };
-
+    console.dir(body);
     if (!body || !body.platform || !body.access_token || 
         !body.bid || !body.app_type || !body.seller_nick || 
         !body.last_trans_time || !body.trans_end_time) {
