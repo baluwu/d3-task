@@ -30,11 +30,14 @@ var _httpRequest = function (type, host, path, port, head, data, callback) {
         path: path || '/',
         method: type || 'POST',
         headers: _.extend({
-            'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8',
             'Content-Length': post_data.length,
             'timeout': 150000
         }, head)
     };
+
+    if (!options.headers['Content-Type']) {
+        options.headers['Content-Type'] = 'application/x-www-form-urlencoded;charset=utf-8';
+    }
 
     var req = (options.port == 80 ? http : https).request(options, function (res) {
         res.setEncoding('utf8');
