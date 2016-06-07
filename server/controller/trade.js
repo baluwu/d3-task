@@ -9,7 +9,9 @@ var url = require('url')
     , ctrlTrade = {}
     , rotate_idx = 0;
 
-var _output = function(res, data, status) { http.response(res, data, status || 500, 'JSON'); };
+var _output = function(res, data, status) { 
+    http.response(res, data, status || 500, 'JSON'); 
+};
 
 /**
  * get work process
@@ -30,7 +32,7 @@ var _get_worker = function(bid) {
 
 ctrlTrade.download_trades = function(res, req, body) {
     var resp = { msg: '', succ: false, data: '' };
-    console.dir(body);
+    
     if (!body || !body.platform || !body.access_token || 
         !body.bid || !body.app_type || !body.seller_nick || 
         !body.last_trans_time || !body.trans_end_time) {
@@ -39,8 +41,9 @@ ctrlTrade.download_trades = function(res, req, body) {
         return _output(res, resp);
     }
 
+
     if (!body.page) body.page = 0;
-    if (!body.page_size) body.page_size = 100;
+    if (!body.page_size || body.page_size > 50) body.page_size = 50;
 
     var mod = require('../../libs/' + body.platform + '/business');
     mod.download_trades(body.app_type, body).then(() => {
@@ -48,6 +51,8 @@ ctrlTrade.download_trades = function(res, req, body) {
         resp.succ = true;
         return _output(res, resp, 200);
     }).catch(err => {
+	console.dir(err);
+	console.dir(err.stack);
         resp.msg = err.toString();
         return _output(res, resp);
     }); 

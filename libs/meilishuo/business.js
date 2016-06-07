@@ -111,11 +111,14 @@ var fn = {
             page: params.page,
             page_size: params.page_size,
             uptime_start: params.last_trans_time,
+            ctime_start: params.last_trans_time,
+            ctime_end: params.trans_end_time,
             uptime_end: params.trans_end_time
         };
 
         return new Promise((resolve, reject) => {
             api.post(p, (err, resp) => {
+		console.log(resp);
                 if (err || resp.indexOf('error_response') != -1) {
                     reject('get trade error');    
                 }

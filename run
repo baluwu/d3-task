@@ -1,0 +1,14 @@
+#!/bin/bash
+
+ROOT_PATH_0="/data/javascript/D3/d3-task/server";
+ROOT_PATH_1="/data/javascript/D3/location";
+LOG_FILE="/root/forever.log";
+
+ps -eo pid,command | grep '/usr/bin/node' | awk '{print $1}' | xargs kill -QUIT > /dev/null 2>&1
+
+cd $ROOT_PATH_0 && (/usr/bin/forever --minUptime 5000 --spinSleepTime 1000 -p $ROOT_PATH_0 --wachDiretory -l $LOG_FILE -a -w start start.js) 
+cd $ROOT_PATH_1 && (/usr/bin/forever --minUptime 5000 --spinSleepTime 1000 -p $ROOT_PATH_1 --wachDiretory -l $LOG_FILE -a -w start index.js) 
+
+forever list
+
+
