@@ -75,7 +75,7 @@ var fn = {
     get_trades (resp) { return resp.order_list_get_response.info; },
     get_tid (trade) { return trade.order.order_id; },
     get_status (trade) { return trade.order.status_text; },
-    get_platfrom_trades (app_type, seller_nick, session, v) {
+    get_platfrom_trades (app_type, session, v) {
         var pall = [];
 
         v.q_tids.forEach(function(tid) {

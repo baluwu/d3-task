@@ -4,22 +4,30 @@ var ENV = require('../../config/server')['ENV'];
 var dbcfg = require('../../config/db')[ENV];
 var db = require('../../common/database/mysql');
 
-module.exports = function(platform, app_type, session, seller_nick, fn, resp) {
+/**
+ * @param p {Array}
+ * @return {Promise}
+ */
+module.exports = function(p) {
+
     var v = {};
-    v.platform = platform;
+    v.platform = p.platform;
     v.edit_trades = {};
     v.add_trades = {};
-    v.o_trades = JSON.parse(resp);
-    v.o_trades = fn.get_trades(v.o_trades);
+    v.o_trades = p.o_resp;
+    v.o_trades = p.fn.get_trades(p.o_resp);
     v.tids = [];
+
     v.q_tids = [];
     v.trade_status = {};
-
+    v.trade_body = {};
+    
     v.o_trades.forEach(function(el) {
-         var tid = fn.get_tid(el);
+         var tid = p.fn.get_tid(el);
 
          v.tids.push(tid);
-         v.trade_status[tid] = fn.get_status(el);
+         v.trade_status[tid] = p.fn.get_status(el);
+         v.trade_body[tid] = el;
     });
 
     return Promise.resolve(1).then( () => {
@@ -34,7 +42,6 @@ module.exports = function(platform, app_type, session, seller_nick, fn, resp) {
                 var p_status = v.trade_status[tid];
                 var s_status = sys_trade_status[tid]; 
                 
-                //console.log(p_status, s_status);
                 if (!s_status) {
                     v.add_trades[tid] = 0;
                     v.q_tids.push(tid);
@@ -48,33 +55,58 @@ module.exports = function(platform, app_type, session, seller_nick, fn, resp) {
             return 1;
         });
     }).then(() => {
-        return fn.get_platfrom_trades(app_type, session, v);              
+        return p.fn.get_platfrom_trades(p.app_type, p.seller_nick, p.session, v);              
     })
     .then(r => {
         var p_sql = [];
         for (var tid in v.edit_trades ) {
             var resp = v.edit_trades[tid];
+            var body = v.trade_body[tid];
+
+            if (p.fn.get_trade_resp) {
+                body = p.fn.get_trade_resp(body, resp);
+            }
+            else {
+                body = resp;    
+            }
+
             resp && p_sql.push(
-                db.doQuery('update jdp_' + v.platform + '_trade set jdp_flag=0, jdp_modified=now(), jdp_response=\'' + 
-                    v.edit_trades[tid] + '\' where tid=\'' + tid + '\'')
+                db.doQuery(
+                    'update jdp_' + v.platform + '_trade set jdp_flag=0, status=\'' + 
+                    v.trade_status[tid] + '\', jdp_modified=now(), jdp_response=\'' + 
+                    body + '\' where tid=\'' + tid + '\''
+                )
             );    
         }
 
-        var insert_sql = `INSERT INTO jdp_meilishuo_trade VALUES`;
+        var insert_sql = `INSERT INTO jdp_${v.platform}_trade VALUES`;
         var have_insert = false;
 
         for (var tid in v.add_trades ) {
             var resp = v.add_trades[tid];
+            var body = v.trade_body[tid];
+
+            if (p.fn.get_trade_resp) {
+                body = p.fn.get_trade_resp(body, resp);
+            }
+            else {
+                body = resp;    
+            }
             
             if (have_insert) {
                 insert_sql += ',';    
             }
             else have_insert = true;
             
-            insert_sql += `('${tid}', '${v.trade_status[tid]}', 0, 0, '${seller_nick}', '', now(), now(), NULL, 0, '${resp}', now(), now())`;
+            insert_sql += `('${tid}', '${v.trade_status[tid]}', 0, 0, '${p.seller_nick}', '', now(), now(), NULL, 0, '${body}', now(), now())`;
         }
-        console.log(insert_sql);
-        have_insert && p_sql.push(db.doQuery(insert_sql));
+        
+        if (have_insert) {
+            console.log(insert_sql);
+            p_sql.push(db.doQuery(insert_sql));
+        }
+
+        return Promise.all(p_sql);
     });
 };
 

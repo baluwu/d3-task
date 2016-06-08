@@ -2,7 +2,6 @@
 
 var api = require('./api');
 var handle_trades = require('../../common/trade/download_trade_handler');
-var decode_utf8 = require('../../common/utf8/utf8').decodeUTF8;
 
 /**
  * 错误匹配
@@ -58,9 +57,10 @@ var _parse_error = function(resp) {
 exports.check_trade_status = function(app_type, access_token, tid, cb) {
     var p = {
         app_type: app_type,
-        access_token: access_token,
-	order_id: tid,
-	method: 'meilishuo.order.detail.get'
+        service: 'vipapis.delivery.DvdDeliveryService',
+        method: 'getOrderStatusById',
+        order_id: tid,
+        //vendor_id: 
     };
 
     api.post(p, function(err, resp) {
@@ -72,28 +72,29 @@ exports.check_trade_status = function(app_type, access_token, tid, cb) {
 
 /*适配函数*/
 var fn = {
-    get_trades (resp) { return resp.order_list_get_response.info; },
-    get_tid (trade) { return trade.order.order_id; },
-    get_status (trade) { return trade.order.status_text; },
-    get_platfrom_trades (app_type, session, v) {
+    get_trades (resp) { return resp.result.dvd_order_list; },
+    get_tid (trade) { return trade.order_id; },
+    get_status (trade) { return trade.order_status; },
+    get_platfrom_trades (app_type, vendor_id, session, v) {
         var pall = [];
 
         v.q_tids.forEach(function(tid) {
             let p = {
                 app_type: app_type,
-                access_token: session,
-                method: 'meilishuo.order.detail.get',
-                order_id: tid 
+                service: 'vipapis.delivery.DvdDeliveryService',
+                method: 'getOrderDetail',
+                order_id: tid,
+                vendor_id: vendor_id 
             };
 
             pall.push( new Promise((resolve, reject) => {
                 api.post(p, (err, resp) => {
-                    if (err || resp.indexOf('error_response') != -1) {
+                    if (err || resp.indexOf('"returnCode":"0"') == -1) {
                         reject('get trade detail error');    
                     }
                     else {
-                        if (v.add_trades[tid] === 0) v.add_trades[tid] = decode_utf8(resp);
-                        if (v.edit_trades[tid] === 0) v.edit_trades[tid] = decode_utf8(resp);
+                        if (v.add_trades[tid] === 0) v.add_trades[tid] = resp;
+                        if (v.edit_trades[tid] === 0) v.edit_trades[tid] = resp;
 
                         resolve(resp);
                     }
@@ -103,48 +104,89 @@ var fn = {
 
         return Promise.all(pall);
     },
+
+    get_order_form_detail (o_resp) {
+        return o_resp.result.orderDetails;
+    },
+
+    /**
+     * 拼接完整trade_response
+     * @param list_trade {Object}
+     * @param detail_trade {String}
+     * @return {String}
+     */
+    get_trade_resp (list_trade, detail_trade) {
+        var o_d;
+
+        try {
+            o_d = JSON.parse(detail_trade);    
+        }
+        catch (e) {
+            throw(new Error(e.toString()));    
+        }
+
+        list_trade.orders = fn.get_order_form_detail(o_d);
+
+        return JSON.stringify(list_trade);
+    }, 
+
     download_trades (app_type, params) {
          var p = {
             app_type: app_type,
-            access_token: params.access_token,
-            method: 'meilishuo.order.list.get',
+            service: 'vipapis.delivery.DvdDeliveryService',
+            method: 'getOrderList',
+            vendor_id: params.seller_nick,
             page: params.page,
-            page_size: params.page_size,
-            uptime_start: params.last_trans_time,
-            ctime_start: params.last_trans_time,
-            ctime_end: params.trans_end_time,
-            uptime_end: params.trans_end_time
+            limit: params.page_size,
+            st_add_time: params.last_trans_time,
+            et_add_time: params.trans_end_time,
+            order_status: 10
         };
 
         return new Promise((resolve, reject) => {
             api.post(p, (err, resp) => {
-		console.log(resp);
-                if (err || resp.indexOf('error_response') != -1) {
-                    reject('get trade error');    
+                if (err) {
+                    return reject(err.toString());    
                 }
-                else resolve(resp);
+                
+                var o;
+                try {
+                    o = JSON.parse(resp);
+                }
+                catch (err) {
+                    return reject('返回结果非JSON格式');    
+                }
+                
+                if (o.returnCode !== '0') return reject(o.returnMessage || '接口出错了');
+                else if (o.result && o.result.total) {
+                    resolve({ resp: resp, o_resp: o});
+                }
+                else reject('没有订单');
             }); 
         }).then(r => {
-            return handle_trades('meilishuo', app_type, params.access_token, params.seller_nick, fn, r);
+            return handle_trades({
+                platform: 'vip', 
+                app_type: app_type, 
+                session: params.access_token, 
+                seller_nick: params.seller_nick, 
+                fn: fn, 
+                resp: r.resp,
+                o_resp: r.o_resp
+            });
         }).catch(err => {
             console.log(err.stack || err);    
         });
     }
 };
 
-exports.download_trades = function(app_type, params) {
-    return fn.download_trades(app_type, params);
-}
+exports.download_trades = fn.download_trades;
 
-/*
-fn.download_trade(4, {
-    seller_nick: '宋人专卖店',
-    access_token: '8bebb2b14b783641b75a8ac18ca3b203',
-    page: 0,
-    page_size: 5,
-    last_trans_time: '2015-05-02 00:00:01',
-    trans_end_time: '2015-05-03 00:00:01'
+fn.download_trades(4, {
+    seller_nick: '550',
+    page: 1,
+    page_size: 2,
+    last_trans_time: '2016-05-01 00:00:01',
+    trans_end_time: '2016-06-01 00:00:01'
 });
-*/
 
 

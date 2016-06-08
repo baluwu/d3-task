@@ -48,7 +48,7 @@ var _httpRequest = function (type, host, path, port, head, data, callback) {
 
         res.on('end', function (chunk) {
             if (env == 'DEV' || env == 'TEST') {
-                console.log(result);
+                //console.log(result);
             }
 
             callback(null, result);
