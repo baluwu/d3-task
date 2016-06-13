@@ -140,7 +140,7 @@ var fn = {
             limit: params.page_size,
             st_add_time: params.last_trans_time,
             et_add_time: params.trans_end_time,
-            order_status: 10
+            //order_status: 10
         };
 
         return new Promise((resolve, reject) => {
@@ -183,9 +183,9 @@ exports.download_trades = fn.download_trades;
 
 fn.download_trades(4, {
     seller_nick: '550',
-    page: 1,
-    page_size: 2,
-    last_trans_time: '2016-05-01 00:00:01',
+    page: 2,
+    page_size: 100,
+    last_trans_time: '2015-05-01 00:00:01',
     trans_end_time: '2016-06-01 00:00:01'
 });
 
