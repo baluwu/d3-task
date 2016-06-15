@@ -88,7 +88,8 @@ var autoload_trade = function(platform) {
                     trans_end_time: cn_date(),
                     store_id: el.store_id,
                     page: platform == 'meilishuo' ? 0 : 1,
-                    page_size: 50
+                    page_size: 2,
+                    load_all: true
                 };
 
                 return mod.download_trades(param.app_type, param);

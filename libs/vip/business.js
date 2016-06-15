@@ -141,6 +141,7 @@ var fn = {
 
     /*下载订单*/
     download_trades (app_type, params) {
+        console.log('calling download_trades');
         var p = {
             app_type: app_type,
             service: 'vipapis.delivery.DvdDeliveryService',
@@ -184,9 +185,13 @@ var fn = {
                 bid: params.bid,
                 store_id: params.store_id
             });
-        }).then(() => {
-            p.page++;
-            return fn.download_trades(app_type, p);  
+        }).then((r) => {
+            if (params.load_all) {
+                p.page++;
+                return fn.download_trades(app_type, p);  
+            }
+            
+            return r;
         })
         .catch(err => {
             console.log(err.stack || err);    

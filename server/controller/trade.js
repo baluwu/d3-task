@@ -33,6 +33,7 @@ var _get_worker = function(bid) {
     return worker;
 };
 
+/*任务版的订单下载*/
 ctrlTrade.autoload_trades = function(res, req, body) {
 
     var st = (new Date()).getTime();
@@ -92,6 +93,9 @@ ctrlTrade.download_trades = function(res, req, body) {
     }
 
     if (!body.page_size || body.page_size > 50) body.page_size = 50;
+
+    /*是否下载所有订单*/
+    body.load_all = false;
 
     var mod = require('../../libs/' + body.platform + '/business');
     return mod.download_trades(body.app_type, body).then(() => {
