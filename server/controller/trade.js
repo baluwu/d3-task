@@ -6,6 +6,9 @@ var url = require('url')
     , cp = require('child_process')
     , event = require('../../common/event/event')
     , http = require('../../common/http/http')
+    , db = require('../../common/database/mysql')
+    , each_serial = require('../../common/to-promise').each_serial
+    , cn_date = require('../../common/date/date').cn_date
     , ctrlTrade = {}
     , rotate_idx = 0;
 
@@ -30,29 +33,74 @@ var _get_worker = function(bid) {
     return worker;
 };
 
+ctrlTrade.autoload_trades = function(res, req, body) {
+
+    var st = (new Date()).getTime();
+
+    /* register the context of this call */
+    var call_id = event.register_context(res);
+
+    /* register CK_FIN event */
+    event.register_event('AUTOLOAD_TRADE_FIN', function(callid, app_type, data) {
+        var resp = {};
+        resp.data = data;
+        resp.succ = data == 1;
+        
+        /* get context by call_id */
+        var response = event.get_context(callid);
+        
+        _output(response, resp, 200);
+
+        var et = (new Date()).getTime();
+
+        console.log('%s: auto load trades, platform[%s], call_id: %s, use: %d ms',
+            moment(new Date()).format('YYYY-MM-DD HH:mm:ss').toString(),
+            body.platform, callid, et - st
+        );
+
+        /* release context */
+        event.release_context(callid);
+    });
+
+    /* get woker process */
+    var worker = _get_worker(body.bid);
+
+    /* start listen event */
+    event.start(worker);
+
+    /* send message to child process */
+    worker.send({ type: 'AUTOLOAD_TRADE', call_id: call_id, params: body.platform });
+};
+
 ctrlTrade.download_trades = function(res, req, body) {
     var resp = { msg: '', succ: false, data: '' };
-    
+
     if (!body || !body.platform || !body.access_token || 
         !body.bid || !body.app_type || !body.seller_nick || 
-        !body.last_trans_time || !body.trans_end_time) {
+        !body.last_trans_time || !body.trans_end_time ||
+        !body.store_id) {
         
         resp.msg = 'params not complete';
         return _output(res, resp);
     }
 
+    if (!body.page) { 
+        if (body.platform == 'meilishuo') {
+            body.page = 0;
+        }
+        else body.page = 1;
+    }
 
-    if (!body.page) body.page = 0;
     if (!body.page_size || body.page_size > 50) body.page_size = 50;
 
     var mod = require('../../libs/' + body.platform + '/business');
-    mod.download_trades(body.app_type, body).then(() => {
+    return mod.download_trades(body.app_type, body).then(() => {
         resp.msg = '下载完成';
         resp.succ = true;
         return _output(res, resp, 200);
     }).catch(err => {
-	console.dir(err);
-	console.dir(err.stack);
+        console.dir(err);
+        console.dir(err.stack);
         resp.msg = err.toString();
         return _output(res, resp);
     }); 

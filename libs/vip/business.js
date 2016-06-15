@@ -2,6 +2,7 @@
 
 var api = require('./api');
 var handle_trades = require('../../common/trade/download_trade_handler');
+var db = require('../../common/database/mysql');
 
 /**
  * 错误匹配
@@ -63,7 +64,7 @@ exports.check_trade_status = function(app_type, access_token, tid, cb) {
         //vendor_id: 
     };
 
-    api.post(p, function(err, resp) {
+    api.post(p, (err, resp) => {
         var _err = err || _parse_error(resp);
         _err && tid.tid && (_err = tid.tid + _err); 
         cb(null, { msg: _err, tid: tid.ptid || tid });
@@ -76,9 +77,10 @@ var fn = {
     get_tid (trade) { return trade.order_id; },
     get_status (trade) { return trade.order_status; },
     get_platfrom_trades (app_type, vendor_id, session, v) {
+        
         var pall = [];
 
-        v.q_tids.forEach(function(tid) {
+        v.q_tids.forEach((tid) => {
             let p = {
                 app_type: app_type,
                 service: 'vipapis.delivery.DvdDeliveryService',
@@ -115,32 +117,39 @@ var fn = {
      * @param detail_trade {String}
      * @return {String}
      */
-    get_trade_resp (list_trade, detail_trade) {
+    get_trade_resp (list_trade, detail_trade, add_goods) {
         var o_d;
 
         try {
-            o_d = JSON.parse(detail_trade);    
+            o_d = JSON.parse(detail_trade);
+            o_d = fn.get_order_form_detail(o_d);
+
+            o_d.forEach((el) => {
+                if (add_goods && el.barcode && !add_goods[el.barcode]) {
+                    add_goods[el.barcode] = el;    
+                }
+            });
         }
         catch (e) {
             throw(new Error(e.toString()));    
         }
 
-        list_trade.orders = fn.get_order_form_detail(o_d);
+        list_trade.orders = o_d;
 
         return JSON.stringify(list_trade);
     }, 
 
+    /*下载订单*/
     download_trades (app_type, params) {
-         var p = {
+        var p = {
             app_type: app_type,
             service: 'vipapis.delivery.DvdDeliveryService',
             method: 'getOrderList',
-            vendor_id: params.seller_nick,
+            vendor_id: params.seller_nick || params.vendor_id,
             page: params.page,
-            limit: params.page_size,
-            st_add_time: params.last_trans_time,
-            et_add_time: params.trans_end_time,
-            //order_status: 10
+            limit: params.page_size || params.limit,
+            st_add_time: params.last_trans_time || params.st_add_time,
+            et_add_time: params.trans_end_time || params.et_add_time
         };
 
         return new Promise((resolve, reject) => {
@@ -156,9 +165,9 @@ var fn = {
                 catch (err) {
                     return reject('返回结果非JSON格式');    
                 }
-                
+
                 if (o.returnCode !== '0') return reject(o.returnMessage || '接口出错了');
-                else if (o.result && o.result.total) {
+                else if (o.result && o.result.total && o.result.dvd_order_list) {
                     resolve({ resp: resp, o_resp: o});
                 }
                 else reject('没有订单');
@@ -168,25 +177,95 @@ var fn = {
                 platform: 'vip', 
                 app_type: app_type, 
                 session: params.access_token, 
-                seller_nick: params.seller_nick, 
+                seller_nick: params.seller_nick || params.vendor_id, 
                 fn: fn, 
                 resp: r.resp,
-                o_resp: r.o_resp
+                o_resp: r.o_resp,
+                bid: params.bid,
+                store_id: params.store_id
             });
-        }).catch(err => {
+        }).then(() => {
+            p.page++;
+            return fn.download_trades(app_type, p);  
+        })
+        .catch(err => {
             console.log(err.stack || err);    
         });
+    },
+    
+    /*VIP从订单中添加商品*/
+    add_goods (store_id, bid, arr) {
+        var barcodes = [];
+
+        for (var barcode in arr) {
+            barcodes.push(barcode);    
+        }
+
+        return Promise.resolve(1).then(() => {
+            if (!barcodes.length) return 0;
+
+            var ENV = require('../../config/server')['ENV'];
+            var DBCFG = require('../../config/db')[ENV]['otherdb' + (bid % 10)];
+            
+            db.init(DBCFG);
+
+            var tb_1, tb_2;
+
+            if(bid >= 2300) {        
+                tb_1 = 'e_goods_platform_' + (Math.floor(bid / 10) % 1000);
+                tb_2 = 'e_goods_skus_' + (Math.floor(bid / 10) % 1000);
+            } else {
+                tb_1 = 'e_goods_platform_' + (Math.floor(bid / 10) % 100);
+                tb_2 = 'e_goods_skus_' + (Math.floor(bid / 10) % 100);
+            }
+
+            return db.doQuery(
+                'SELECT barcode FROM ' + tb_1 + ' WHERE business_id=' + bid + ' AND op_sku_iid IN(\'' + barcodes.join('\',\'') + '\')',
+                bid
+            ).then(r => {
+                r.forEach(el => {
+                    var bc = el.barcode;
+                    if (arr[bc]) delete arr[bc];
+                });
+            }).then(() => {
+                var now = Math.floor((new Date()).getTime() / 1000);
+                var i_plt_sql = 
+                    'INSERT INTO ' + tb_1 + '(`store_id`, `business_id`, `outer_id`, `op_num_iid`, `op_goods_name`,' + 
+                    '`op_sku_iid`, `barcode`, `attribute_name`, `attribute_value`, `goods_status`, `sale_price`) ' +
+                    'VALUES ';
+
+                var i_sku_sql = 
+                    'INSERT INTO ' + tb_2 + '(`business_id`, `outer_sku_id`, `barcode`, `num_iid`, ' + 
+                    '`standards`, `created`, `status`, `simplename`, `op_sku_iid`) VALUES ';
+
+                var len = 0;
+                for (var barcode in arr) {
+                    len++;
+
+                    var el = arr[barcode];
+                    
+                    i_plt_sql += `(${store_id}, ${bid}, '${el.barcode}', '${el.art_no}', '${el.product_name}', '${el.barcode}', '${el.barcode}', 'size', '${el.size}', '1', ${el.sell_price}),`;
+                    i_sku_sql += `(${bid}, '${el.barcode}', '${el.barcode}', '${el.art_no}', '${el.size}', ${now}, '1', '${el.product_name}', '${el.barcode}'),`;
+                }
+
+                if (len) {
+                    i_plt_sql = i_plt_sql.substr(0, i_plt_sql.length - 1);
+                    i_sku_sql = i_sku_sql.substr(0, i_sku_sql.length - 1);
+
+                    var u_sql = 
+                        `UPDATE ${tb_1} a JOIN ${tb_2} b 
+                        ON a.business_id=b.business_id AND a.barcode=b.barcode
+                        SET a.sku_id=b.sku_id`;
+
+                    return Promise.all([db.doQuery(i_plt_sql), db.doQuery(i_sku_sql), db.doQuery(u_sql)]);
+                }
+
+                return 0;
+            });
+
+        })
     }
 };
 
 exports.download_trades = fn.download_trades;
-
-fn.download_trades(4, {
-    seller_nick: '550',
-    page: 2,
-    page_size: 100,
-    last_trans_time: '2015-05-01 00:00:01',
-    trans_end_time: '2016-06-01 00:00:01'
-});
-
 

@@ -9,7 +9,6 @@ var db = require('../../common/database/mysql');
  * @return {Promise}
  */
 module.exports = function(p) {
-
     var v = {};
     v.platform = p.platform;
     v.edit_trades = {};
@@ -58,13 +57,16 @@ module.exports = function(p) {
         return p.fn.get_platfrom_trades(p.app_type, p.seller_nick, p.session, v);              
     })
     .then(r => {
-        var p_sql = [];
+        var p_sql = [], add_goods = {};
+    
+        db.init(dbcfg.PLATFORM_DATA);
+    
         for (var tid in v.edit_trades ) {
             var resp = v.edit_trades[tid];
             var body = v.trade_body[tid];
 
             if (p.fn.get_trade_resp) {
-                body = p.fn.get_trade_resp(body, resp);
+                body = p.fn.get_trade_resp(body, resp, add_goods);
             }
             else {
                 body = resp;    
@@ -87,7 +89,7 @@ module.exports = function(p) {
             var body = v.trade_body[tid];
 
             if (p.fn.get_trade_resp) {
-                body = p.fn.get_trade_resp(body, resp);
+                body = p.fn.get_trade_resp(body, resp, add_goods);
             }
             else {
                 body = resp;    
@@ -102,16 +104,20 @@ module.exports = function(p) {
         }
         
         if (have_insert) {
-            console.log(insert_sql);
+            //console.log(insert_sql);
             p_sql.push(db.doQuery(insert_sql));
         }
 
-        return Promise.all(p_sql);
+        return Promise.all(p_sql).then(() => {
+            return add_goods;    
+        });
+    }).then(r => {
+        return p.fn.add_goods(p.store_id, p.bid, r);
     });
 };
 
 var get_sys_trade = function(v) {
-    db.init(dbcfg);
+    db.init(dbcfg.PLATFORM_DATA);
     var sql = 'select tid, status from jdp_' + v.platform + '_trade where tid in(\'' + v.tids.join('\',\'') + '\')';
     return db.doQuery(sql);
 };
