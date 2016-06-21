@@ -14,6 +14,7 @@ var mysql = require('mysql'),
 
 var DB = {
     init: function(cfg) {
+        console.log('use: ', cfg);
         DB.cfg = cfg;       
     },
 
@@ -84,8 +85,9 @@ var DB = {
         return DB.doQuery(sql);
     },
 
-    doQuery: function(sql) {
-        var link = DB.createConnection();
+    /*这里不分库分表*/
+    doQuery: function(sql, cfg) {
+        var link = DB.createConnection(cfg);
 
         if (!link) console.log('connect database error');
 
@@ -101,8 +103,8 @@ var DB = {
         });
     },
 
-    createConnection: function() {
-        var conn = mysql.createConnection(DB.cfg);
+    createConnection: function(cfg) {
+        var conn = mysql.createConnection(cfg || DB.cfg);
         conn.connect();
         return conn;
     }

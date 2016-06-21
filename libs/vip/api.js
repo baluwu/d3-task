@@ -28,6 +28,10 @@ var post = function (params, callback) {
         method: params.method
     }; 
 
+    if (params.access_token) {
+        sp.accessToken = params.access_token;    
+    }
+
     delete params.service;
     delete params.method;
     delete params.access_token;
@@ -53,8 +57,9 @@ var post = function (params, callback) {
  */
 var _genSign = function (sys_params, api_params, key, secret) {
     var sign = '';
-    if(sys_params.access_token){
-        sign += "accessToken" + access_token;
+
+    if(sys_params.accessToken){
+        sign += "accessToken" + sys_params.accessToken;
     }
     sign += "appKey" + key;
     sign += "format" + sys_params.format;
@@ -72,14 +77,5 @@ var _genSign = function (sys_params, api_params, key, secret) {
         .digest('hex').toUpperCase();
 }
 
-/**
- * 对hash的key字母进行排序
- * @param params
- * @return {Object}
- * @constructor
- */
-var _keySort = function (params) {
-    return  _.object(_.pairs(params).sort());
-}
-
 exports.post = post;
+

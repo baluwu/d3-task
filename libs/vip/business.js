@@ -61,7 +61,6 @@ exports.check_trade_status = function(app_type, access_token, tid, cb) {
         service: 'vipapis.delivery.DvdDeliveryService',
         method: 'getOrderStatusById',
         order_id: tid,
-        //vendor_id: 
     };
 
     api.post(p, (err, resp) => {
@@ -86,7 +85,8 @@ var fn = {
                 service: 'vipapis.delivery.DvdDeliveryService',
                 method: 'getOrderDetail',
                 order_id: tid,
-                vendor_id: vendor_id 
+                vendor_id: vendor_id,
+                access_token: session
             };
 
             pall.push( new Promise((resolve, reject) => {
@@ -141,11 +141,12 @@ var fn = {
 
     /*下载订单*/
     download_trades (app_type, params) {
-        console.log('calling download_trades');
+        var session = params.access_token;
         var p = {
             app_type: app_type,
             service: 'vipapis.delivery.DvdDeliveryService',
             method: 'getOrderList',
+            access_token: params.access_token,
             vendor_id: params.seller_nick || params.vendor_id,
             page: params.page,
             limit: params.page_size || params.limit,
@@ -177,7 +178,7 @@ var fn = {
             return handle_trades({
                 platform: 'vip', 
                 app_type: app_type, 
-                session: params.access_token, 
+                session: params.access_token,
                 seller_nick: params.seller_nick || params.vendor_id, 
                 fn: fn, 
                 resp: r.resp,
@@ -188,6 +189,11 @@ var fn = {
         }).then((r) => {
             if (params.load_all) {
                 p.page++;
+                p.access_token = session;
+                p.store_id = params.store_id;
+                p.bid = params.bid;
+                p.load_all = params.load_all;
+
                 return fn.download_trades(app_type, p);  
             }
             
@@ -211,8 +217,6 @@ var fn = {
 
             var ENV = require('../../config/server')['ENV'];
             var DBCFG = require('../../config/db')[ENV]['otherdb' + (bid % 10)];
-            
-            db.init(DBCFG);
 
             var tb_1, tb_2;
 
@@ -226,7 +230,7 @@ var fn = {
 
             return db.doQuery(
                 'SELECT barcode FROM ' + tb_1 + ' WHERE business_id=' + bid + ' AND op_sku_iid IN(\'' + barcodes.join('\',\'') + '\')',
-                bid
+                DBCFG
             ).then(r => {
                 r.forEach(el => {
                     var bc = el.barcode;
@@ -262,7 +266,7 @@ var fn = {
                         ON a.business_id=b.business_id AND a.barcode=b.barcode
                         SET a.sku_id=b.sku_id`;
 
-                    return Promise.all([db.doQuery(i_plt_sql), db.doQuery(i_sku_sql), db.doQuery(u_sql)]);
+                    return Promise.all([db.doQuery(i_plt_sql, DBCFG), db.doQuery(i_sku_sql, DBCFG), db.doQuery(u_sql, DBCFG)]);
                 }
 
                 return 0;

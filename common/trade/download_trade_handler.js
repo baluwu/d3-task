@@ -59,8 +59,6 @@ module.exports = function(p) {
     .then(r => {
         var p_sql = [], add_goods = {};
     
-        db.init(dbcfg.PLATFORM_DATA);
-    
         for (var tid in v.edit_trades ) {
             var resp = v.edit_trades[tid];
             var body = v.trade_body[tid];
@@ -76,7 +74,8 @@ module.exports = function(p) {
                 db.doQuery(
                     'update jdp_' + v.platform + '_trade set jdp_flag=0, status=\'' + 
                     v.trade_status[tid] + '\', jdp_modified=now(), jdp_response=\'' + 
-                    body + '\' where tid=\'' + tid + '\''
+                    body + '\' where tid=\'' + tid + '\'',
+                    dbcfg.PLATFORM_DATA
                 )
             );    
         }
@@ -105,21 +104,21 @@ module.exports = function(p) {
         
         if (have_insert) {
             //console.log(insert_sql);
-            p_sql.push(db.doQuery(insert_sql));
+            p_sql.push(db.doQuery(insert_sql, dbcfg.PLATFORM_DATA));
         }
 
         return Promise.all(p_sql).then(() => {
             return add_goods;    
         });
     }).then(r => {
+        //console.log('adding goods:', p);
         return p.fn.add_goods(p.store_id, p.bid, r);
     });
 };
 
 var get_sys_trade = function(v) {
-    db.init(dbcfg.PLATFORM_DATA);
     var sql = 'select tid, status from jdp_' + v.platform + '_trade where tid in(\'' + v.tids.join('\',\'') + '\')';
-    return db.doQuery(sql);
+    return db.doQuery(sql, dbcfg.PLATFORM_DATA);
 };
 
 

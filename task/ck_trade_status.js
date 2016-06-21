@@ -59,15 +59,13 @@ var autoload_trade = function(platform) {
     var ENV = require('../config/server')['ENV'];
     var DBCFG = require('../config/db')[ENV]['SYSTEM'];
 
-    db.init(DBCFG);
-
     return db.doQuery(
         `SELECT open_type, business_id, store_id, user_nick, session_key FROM e_business_store where open_type='${platform}'`,
-        0
+        DBCFG
     ).then(r => {
         var to_download = function(el) {
             return db.doQuery(
-                `SELECT is_buyout FROM e_business WHERE business_id='${el.business_id}'`, 0
+                `SELECT is_buyout FROM e_business WHERE business_id='${el.business_id}'`, DBCFG
             ).then(rs => {
                 var now = new Date();
                 var mod;
@@ -88,7 +86,7 @@ var autoload_trade = function(platform) {
                     trans_end_time: cn_date(),
                     store_id: el.store_id,
                     page: platform == 'meilishuo' ? 0 : 1,
-                    page_size: 2,
+                    page_size: 50,
                     load_all: true
                 };
 
