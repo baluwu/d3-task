@@ -111,7 +111,6 @@ module.exports = function(p) {
             return add_goods;    
         });
     }).then(r => {
-        //console.log('adding goods:', p);
         return p.fn.add_goods(p.store_id, p.bid, r);
     });
 };
