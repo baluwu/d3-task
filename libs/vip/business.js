@@ -264,7 +264,7 @@ var fn = {
                     var u_sql = 
                         `UPDATE ${tb_1} a JOIN ${tb_2} b 
                         ON a.business_id=b.business_id AND a.barcode=b.barcode
-                        SET a.sku_id=b.sku_id`;
+                        SET a.sku_id=b.sku_id WHERE a.business_id=${bid} AND a.store_id=${store_id}`;
 
                     return Promise.all([db.doQuery(i_plt_sql, DBCFG), db.doQuery(i_sku_sql, DBCFG), db.doQuery(u_sql, DBCFG)]);
                 }
