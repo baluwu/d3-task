@@ -15,33 +15,32 @@ var _parse_error = function(resp) {
 
     try { o = JSON.parse(resp); }
     catch (e) { return '获取订单数据出错'; }
-    
+
     if (!o) {
         error = '平台接口数据错误';
     }
     else {
-        var s = o.order_detail_get_response.info.order.status_text;
+        var s = o.result[0].order_status;
         
         var error_desc = {
-            '等待付款': '订单未付款',
-            '等待确认收货': '订单已发货',
-            '交易成功': '订单已完成',
-            '交易关闭': '订单已关闭'
+            'STATUS_60': '已完成',
+            'STATUS_22': '已发货',
+            'STATUS_53': '退货未审核',
+            'STATUS_117': '退货审核中',
+            'STATUS_54': '退货已审核',
+            'STATUS_55': '拒收回访',
+            'STATUS_58':  '退货已返仓',
+            'STATUS_70':  '已拒收',
+            'STATUS_45':  '退款处理中',
+            'STATUS_49':  '已退款',
+            'STATUS_25':  '已签收',
+            'STATUS_97':  '已取消',
+            'STATUS_118': '订单申请断货',
+            'STATUS_119': '断货申请通过'
         };
 
         if(error_desc[s]) {
             error = error_desc[s];    
-        }
-        else if (o.order_detail_get_response.info.goods) {
-            var orders = o.order_detail_get_response.info.goods;
-            orders.forEach(function(el) {
-                if (el.refund_status_text != '') {
-                    error = '订单有退款';
-                }
-            });
-        }
-        else {
-            error = '未知错误';
         }
     }
 
@@ -55,16 +54,15 @@ var _parse_error = function(resp) {
  * @param cb {Function} 回调函数
  * @constructor
  */
-exports.check_trade_status = function(app_type, access_token, tid, cb) {
+exports.check_trade_status = function(app_type, access_token, tid, user_nick, cb) {
     var p = {
         app_type: app_type,
         service: 'vipapis.delivery.DvdDeliveryService',
         method: 'getOrderStatusById',
         access_token: access_token,
+	vendor_id: user_nick,
         order_id: tid
     };
-
-    console.log(p);
 
     api.post(p, (err, resp) => {
         var _err = err || _parse_error(resp);
