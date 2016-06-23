@@ -60,8 +60,11 @@ exports.check_trade_status = function(app_type, access_token, tid, cb) {
         app_type: app_type,
         service: 'vipapis.delivery.DvdDeliveryService',
         method: 'getOrderStatusById',
-        order_id: tid,
+        access_token: access_token,
+        order_id: tid
     };
+
+    console.log(p);
 
     api.post(p, (err, resp) => {
         var _err = err || _parse_error(resp);
