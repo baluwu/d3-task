@@ -29,11 +29,10 @@ var post = function (params, callback) {
         method: params.method
     }; 
     
-    /* params */
-    var p = _.extend(sp, params);
-    
     delete params.access_token;
     delete params.method;
+
+    var p = _.extend(sp, params);
 
     p.sign = _genSign(p, auth.s);
 

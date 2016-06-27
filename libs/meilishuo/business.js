@@ -104,6 +104,7 @@ var fn = {
         return Promise.all(pall);
     },
     download_trades (app_type, params) {
+         var session = params.access_token;
          var p = {
             app_type: app_type,
             access_token: params.access_token,
@@ -118,12 +119,17 @@ var fn = {
 
         return new Promise((resolve, reject) => {
             api.post(p, (err, resp) => {
-                if (err || resp.indexOf('error_response') != -1) {
-                    reject('get trade error');    
-                }
+                if (err) return reject(err);
                 else resolve(resp);
             }); 
         }).then(r => {
+            var o_r = JSON.parse(r);
+            
+            if (!o_r.order_list_get_response ||
+                !o_r.order_list_get_response.total_num) {
+                throw 'No Platform Trade';    
+            }
+
             return handle_trades({
                 platform: 'meilishuo', 
                 app_type: app_type, 
@@ -131,9 +137,24 @@ var fn = {
                 seller_nick: params.seller_nick, 
                 fn: fn, 
                 resp: r,
-                o_resp: JSON.parse(r)
+                o_resp: o_r,
+                bid: params.bid,
+                store_id: params.store_id
             });
-        }).catch(err => {
+        }).then((r) => {
+            if (params.load_all) {
+                p.page++;
+                p.access_token = session;
+                p.store_id = params.store_id;
+                p.bid = params.bid;
+                p.load_all = params.load_all;
+
+                return fn.download_trades(app_type, p);  
+            }
+            
+            return r;
+        })
+        .catch(err => {
             console.log(err.stack || err);    
         });
     }
@@ -141,6 +162,7 @@ var fn = {
 
 exports.download_trades = fn.download_trades;
 
+/*
 fn.download_trades(4, {
     seller_nick: '淘瑞流行馆',
     access_token: '153e319388f1c9522fede24d60bed95d',
@@ -149,5 +171,6 @@ fn.download_trades(4, {
     last_trans_time: '2015-05-02 00:00:01',
     trans_end_time: '2015-05-03 00:00:01'
 });
+*/
 
 
