@@ -28,13 +28,19 @@ var check = function(app_type, arr, cb) {
                 console.log(e.message); 
                 return b_cb( null, {msg: '未知平台订单', tid: el.tid });
             }
-
-            mod.check_trade_status(
+		
+            var call_pam = [
                 app_type,
                 el.access_token,
-                el.ptid ? {ptid: el.ptid, tid: el.tid} : el.tid, 
-                b_cb
-            );
+                el.ptid ? {ptid: el.ptid, tid: el.tid} : el.tid
+            ];
+
+            if (el.plt == 'vip') {
+                call_pam.push(el.user_nick);
+            }
+            call_pam.push(b_cb);
+
+            mod.check_trade_status.apply(mod, call_pam);
 
         }, function(err, r) { 
             

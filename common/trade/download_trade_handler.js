@@ -111,7 +111,10 @@ module.exports = function(p) {
             return add_goods;    
         });
     }).then(r => {
-        return p.fn.add_goods(p.store_id, p.bid, r);
+	if (p.fn.add_goods) {
+            return p.fn.add_goods(p.store_id, p.bid, r);
+	}
+        else return Promise.resolve();
     });
 };
 
