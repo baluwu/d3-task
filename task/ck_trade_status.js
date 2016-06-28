@@ -66,7 +66,7 @@ var autoload_trade = function(platform) {
     var DBCFG = require('../config/db')[ENV]['SYSTEM'];
 
     return db.doQuery(
-        `SELECT open_type, business_id, store_id, user_nick, session_key FROM e_business_store where open_type='${platform}'`,
+        `SELECT open_type, business_id, store_id, user_nick, user_id, session_key FROM e_business_store where open_type='${platform}'`,
         DBCFG
     ).then(r => {
         var to_download = function(el) {
@@ -82,12 +82,17 @@ var autoload_trade = function(platform) {
                     console.log(err.stack);    
                 }
 
+		var seller_nick = el.user_nick;
+		if (platform == 'vip') {	
+		    seller_nick = el.user_id;
+		}
+
                 var param = {
                     platform: platform,
                     access_token: el.session_key,
                     bid: el.business_id,
                     app_type: rs[0].is_buyout,
-                    seller_nick: el.user_nick,
+                    seller_nick: seller_nick,
                     last_trans_time: cn_date((new Date()).setTime(now.getTime() - 86400 * 7 * 1000)),
                     trans_end_time: cn_date(),
                     store_id: el.store_id,
